@@ -20,8 +20,11 @@ interface Conversation {
   id: string;
   name: string;
   lastMessage: string;
-  time: string;
+  lastMessageTime: Date;
   unreadCount: number;
+  lastSeenAt: Date | null;
+  otherUserId: string;
+  image: string | null;
 }
 
 interface ConversationsSearchProps {
