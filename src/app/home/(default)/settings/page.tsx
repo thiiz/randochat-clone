@@ -11,16 +11,6 @@ import Link from 'next/link';
 export default function SettingsPage() {
   return (
     <div className='flex h-screen flex-col bg-gradient-to-b from-theme-gradient-from to-white dark:from-theme-gradient-dark-from dark:to-background'>
-      {/* Header */}
-      <div className='flex items-center gap-3 border-b px-4 py-3'>
-        <Button variant='ghost' size='icon' asChild>
-          <Link href='/home'>
-            <ArrowLeft className='h-5 w-5' />
-          </Link>
-        </Button>
-        <h1 className='text-lg font-semibold'>Configurações</h1>
-      </div>
-
       {/* Content */}
       <div className='flex-1 overflow-auto p-4'>
         <div className='mx-auto max-w-2xl space-y-6'>
@@ -59,24 +49,6 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </div>
-      </div>
-
-      {/* Bottom Navigation */}
-      <div className='flex items-center justify-around border-t py-3'>
-        <Button variant='ghost' size='icon' asChild>
-          <Link href='/home'>
-            <Home className='h-5 w-5' />
-          </Link>
-        </Button>
-        <Button
-          size='icon'
-          className='h-12 w-12 rounded-full bg-primary hover:bg-primary/90'
-        >
-          <Shuffle className='h-5 w-5' />
-        </Button>
-        <Button variant='ghost' size='icon' className='text-primary'>
-          <Settings className='h-5 w-5' />
-        </Button>
       </div>
     </div>
   );
