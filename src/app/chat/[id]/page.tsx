@@ -82,7 +82,7 @@ export default function ChatPage() {
   };
 
   return (
-    <div className='flex h-[calc(100dvh-52px)] flex-col bg-gradient-to-b from-emerald-50/50 to-white dark:from-emerald-950/20 dark:to-background'>
+    <div className='flex h-screen flex-col bg-gradient-to-b from-emerald-50/50 to-white dark:from-emerald-950/20 dark:to-background'>
       {/* Header */}
       <div className='flex items-center justify-between border-b px-4 py-3'>
         <div className='flex items-center gap-3'>

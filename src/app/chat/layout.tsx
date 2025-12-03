@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'RandoChat - Chat Anônimo',
+  title: 'Chat - RandoChat',
   description: 'Converse com pessoas aleatórias de forma anônima'
 };
 

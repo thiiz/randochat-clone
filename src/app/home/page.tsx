@@ -1,3 +1,4 @@
+import { UserMenu } from '@/components/layout/user-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -5,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { auth } from '@/lib/auth';
-import { Home, MessageCircle, Search, Settings, Shuffle } from 'lucide-react';
+import { Home, Search, Settings, Shuffle } from 'lucide-react';
 import { headers } from 'next/headers';
 import Link from 'next/link';
 
@@ -60,14 +61,16 @@ export default async function Page() {
     headers: await headers()
   });
 
+  if (!session?.user) {
+    return null;
+  }
+
   return (
-    <div className='flex h-[calc(100dvh-52px)] flex-col bg-gradient-to-b from-emerald-50/50 to-white dark:from-emerald-950/20 dark:to-background'>
+    <div className='flex h-screen flex-col bg-gradient-to-b from-emerald-50/50 to-white dark:from-emerald-950/20 dark:to-background'>
       {/* Header */}
       <div className='flex items-center justify-between border-b px-4 py-3'>
         <div className='flex items-center gap-3'>
-          <Button variant='ghost' size='icon' className='h-8 w-8'>
-            <Settings className='h-4 w-4' />
-          </Button>
+          <UserMenu user={session.user} />
           <h1 className='text-lg font-semibold'>Minhas conversas</h1>
         </div>
       </div>
@@ -83,8 +86,7 @@ export default async function Page() {
         </div>
       </div>
 
-      <ScrollArea className='flex-1'>
-        <div className='px-4'>
+      <ScrollArea className='flex-1 px-4'>
           {/* Favorites Section */}
           <div className='mb-4'>
             <p className='text-muted-foreground mb-3 text-sm font-medium'>
@@ -161,7 +163,6 @@ export default async function Page() {
               </Link>
             ))}
           </div>
-        </div>
       </ScrollArea>
 
       {/* Bottom Navigation */}
