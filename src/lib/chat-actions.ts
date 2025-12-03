@@ -231,3 +231,64 @@ export async function sendMessage(
     isRead: message.isRead
   };
 }
+
+export async function findRandomUser(): Promise<{
+  success: boolean;
+  conversationId?: string;
+  error?: string;
+}> {
+  const session = await auth.api.getSession({
+    headers: {
+      cookie: await getSessionCookie()
+    }
+  });
+
+  if (!session?.user?.id) {
+    return { success: false, error: 'Unauthorized' };
+  }
+
+  const currentUserId = session.user.id;
+
+  // Considera "online" quem foi visto nos últimos 5 minutos
+  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+
+  // Busca usuários online (exceto o atual)
+  const onlineUsers = await prisma.user.findMany({
+    where: {
+      id: { not: currentUserId },
+      lastSeenAt: { gte: fiveMinutesAgo }
+    },
+    select: { id: true }
+  });
+
+  if (onlineUsers.length === 0) {
+    return { success: false, error: 'Nenhum usuário online no momento' };
+  }
+
+  // Seleciona um usuário aleatório
+  const randomUser = onlineUsers[Math.floor(Math.random() * onlineUsers.length)];
+
+  // Verifica se já existe conversa entre os dois
+  const existingConversation = await prisma.conversation.findFirst({
+    where: {
+      OR: [
+        { user1Id: currentUserId, user2Id: randomUser.id },
+        { user1Id: randomUser.id, user2Id: currentUserId }
+      ]
+    }
+  });
+
+  if (existingConversation) {
+    return { success: true, conversationId: existingConversation.id };
+  }
+
+  // Cria nova conversa
+  const newConversation = await prisma.conversation.create({
+    data: {
+      user1Id: currentUserId,
+      user2Id: randomUser.id
+    }
+  });
+
+  return { success: true, conversationId: newConversation.id };
+}
