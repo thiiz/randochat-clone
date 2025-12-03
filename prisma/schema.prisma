@@ -24,41 +24,30 @@ model User {
   accounts Account[]
 
   // Chat relations
-  conversations     ConversationParticipant[]
-  sentMessages      Message[]
+  conversationsAsUser1  Conversation[]         @relation("ConversationUser1")
+  conversationsAsUser2  Conversation[]         @relation("ConversationUser2")
+  sentMessages          Message[]
   favoriteConversations FavoriteConversation[]
 
   @@map("user")
 }
 
-// Chat Models
+// Chat Models - 1:1 conversations only
 
 model Conversation {
   id        String   @id @default(cuid())
-  title     String?
-  isGroup   Boolean  @default(false)
+  user1Id   String
+  user2Id   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  participants ConversationParticipant[]
-  messages     Message[]
-  favorites    FavoriteConversation[]
+  user1    User                   @relation("ConversationUser1", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2    User                   @relation("ConversationUser2", fields: [user2Id], references: [id], onDelete: Cascade)
+  messages Message[]
+  favorites FavoriteConversation[]
 
+  @@unique([user1Id, user2Id])
   @@map("conversation")
-}
-
-model ConversationParticipant {
-  id             String   @id @default(cuid())
-  conversationId String
-  userId         String
-  joinedAt       DateTime @default(now())
-  lastReadAt     DateTime?
-
-  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([conversationId, userId])
-  @@map("conversation_participant")
 }
 
 model Message {
