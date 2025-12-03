@@ -15,31 +15,39 @@ import {
 
 const DEFAULT_THEMES = [
   {
-    name: 'Default',
-    value: 'default'
+    name: 'Esmeralda',
+    value: 'emerald'
   },
   {
-    name: 'Blue',
+    name: 'Azul',
     value: 'blue'
   },
   {
-    name: 'Green',
+    name: 'Verde',
     value: 'green'
   },
   {
-    name: 'Amber',
+    name: 'Âmbar',
     value: 'amber'
+  },
+  {
+    name: 'Neutro',
+    value: 'default'
   }
 ];
 
 const SCALED_THEMES = [
   {
-    name: 'Default',
-    value: 'default-scaled'
+    name: 'Esmeralda',
+    value: 'emerald-scaled'
   },
   {
-    name: 'Blue',
+    name: 'Azul',
     value: 'blue-scaled'
+  },
+  {
+    name: 'Neutro',
+    value: 'default-scaled'
   }
 ];
 
@@ -63,15 +71,11 @@ export function ThemeSelector() {
           id='theme-selector'
           className='justify-start *:data-[slot=select-value]:w-12'
         >
-          <span className='text-muted-foreground hidden sm:block'>
-            Select a theme:
-          </span>
-          <span className='text-muted-foreground block sm:hidden'>Theme</span>
-          <SelectValue placeholder='Select a theme' />
+          <SelectValue placeholder='Selecione um tema' />
         </SelectTrigger>
         <SelectContent align='end'>
           <SelectGroup>
-            <SelectLabel>Default</SelectLabel>
+            <SelectLabel>Padrão</SelectLabel>
             {DEFAULT_THEMES.map((theme) => (
               <SelectItem key={theme.name} value={theme.value}>
                 {theme.name}
@@ -80,7 +84,7 @@ export function ThemeSelector() {
           </SelectGroup>
           <SelectSeparator />
           <SelectGroup>
-            <SelectLabel>Scaled</SelectLabel>
+            <SelectLabel>Compacto</SelectLabel>
             {SCALED_THEMES.map((theme) => (
               <SelectItem key={theme.name} value={theme.value}>
                 {theme.name}
@@ -88,7 +92,7 @@ export function ThemeSelector() {
             ))}
           </SelectGroup>
           <SelectGroup>
-            <SelectLabel>Monospaced</SelectLabel>
+            <SelectLabel>Monoespaçado</SelectLabel>
             {MONO_THEMES.map((theme) => (
               <SelectItem key={theme.name} value={theme.value}>
                 {theme.name}

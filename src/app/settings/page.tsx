@@ -10,7 +10,7 @@ import Link from 'next/link';
 
 export default function SettingsPage() {
   return (
-    <div className='flex h-screen flex-col bg-gradient-to-b from-emerald-50/50 to-white dark:from-emerald-950/20 dark:to-background'>
+    <div className='flex h-screen flex-col bg-gradient-to-b from-theme-gradient-from to-white dark:from-theme-gradient-dark-from dark:to-background'>
       {/* Header */}
       <div className='flex items-center gap-3 border-b px-4 py-3'>
         <Button variant='ghost' size='icon' asChild>
@@ -70,11 +70,11 @@ export default function SettingsPage() {
         </Button>
         <Button
           size='icon'
-          className='h-12 w-12 rounded-full bg-emerald-500 hover:bg-emerald-600'
+          className='h-12 w-12 rounded-full bg-primary hover:bg-primary/90'
         >
           <Shuffle className='h-5 w-5' />
         </Button>
-        <Button variant='ghost' size='icon' className='text-emerald-600'>
+        <Button variant='ghost' size='icon' className='text-primary'>
           <Settings className='h-5 w-5' />
         </Button>
       </div>

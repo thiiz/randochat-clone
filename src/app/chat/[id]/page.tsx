@@ -75,7 +75,7 @@ export default function ChatPage() {
   };
 
   return (
-    <div className='flex h-screen flex-col bg-gradient-to-b from-emerald-50/50 to-white dark:from-emerald-950/20 dark:to-background'>
+    <div className='flex h-screen flex-col bg-gradient-to-b from-theme-gradient-from to-white dark:from-theme-gradient-dark-from dark:to-background'>
       {/* Header */}
       <div className='flex items-center justify-between border-b px-4 py-3'>
         <div className='flex items-center gap-3'>
@@ -86,8 +86,8 @@ export default function ChatPage() {
           </Link>
         </div>
         <div className='flex flex-col items-center'>
-          <Avatar className='h-10 w-10 border-2 border-emerald-500'>
-            <AvatarFallback className='bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300'>
+          <Avatar className='h-10 w-10 border-2 border-primary'>
+            <AvatarFallback className='bg-theme-accent-light text-theme-accent-text'>
               {getInitials(mockConversation.name)}
             </AvatarFallback>
           </Avatar>
@@ -108,7 +108,7 @@ export default function ChatPage() {
             <Button
               variant='ghost'
               size='sm'
-              className='h-auto gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900 dark:text-emerald-300'
+              className='h-auto gap-1 rounded-full bg-theme-accent-light px-3 py-1 text-xs text-theme-accent-text hover:bg-theme-accent-medium'
             >
               <ChevronUp className='h-3 w-3' />2 mensagens não lidas
             </Button>
@@ -123,7 +123,7 @@ export default function ChatPage() {
               >
                 {msg.senderId !== 'me' && (
                   <Avatar className='mr-2 h-8 w-8 self-end'>
-                    <AvatarFallback className='bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 text-xs'>
+                    <AvatarFallback className='bg-theme-accent-light text-theme-accent-text text-xs'>
                       {getInitials(mockConversation.name)}
                     </AvatarFallback>
                   </Avatar>
@@ -131,7 +131,7 @@ export default function ChatPage() {
                 <div
                   className={`max-w-[75%] rounded-2xl px-4 py-2 ${
                     msg.senderId === 'me'
-                      ? 'bg-emerald-500 text-white'
+                      ? 'bg-primary text-primary-foreground'
                       : 'bg-muted'
                   }`}
                 >
@@ -145,15 +145,15 @@ export default function ChatPage() {
           {isTyping && (
             <div className='mt-4 flex items-center gap-2'>
               <Avatar className='h-8 w-8'>
-                <AvatarFallback className='bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 text-xs'>
+                <AvatarFallback className='bg-theme-accent-light text-theme-accent-text text-xs'>
                   {getInitials(mockConversation.name)}
                 </AvatarFallback>
               </Avatar>
               <div className='bg-muted rounded-2xl px-4 py-2'>
                 <div className='flex gap-1'>
-                  <span className='h-2 w-2 animate-bounce rounded-full bg-emerald-500 [animation-delay:-0.3s]' />
-                  <span className='h-2 w-2 animate-bounce rounded-full bg-emerald-500 [animation-delay:-0.15s]' />
-                  <span className='h-2 w-2 animate-bounce rounded-full bg-emerald-500' />
+                  <span className='h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-0.3s]' />
+                  <span className='h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-0.15s]' />
+                  <span className='h-2 w-2 animate-bounce rounded-full bg-primary' />
                 </div>
               </div>
             </div>
@@ -172,17 +172,17 @@ export default function ChatPage() {
             className='flex-1'
           />
           <Button variant='ghost' size='icon' className='h-9 w-9'>
-            <Smile className='h-5 w-5 text-emerald-500' />
+            <Smile className='h-5 w-5 text-primary' />
           </Button>
           <Button variant='ghost' size='icon' className='h-9 w-9'>
-            <Paperclip className='h-5 w-5 text-emerald-500' />
+            <Paperclip className='h-5 w-5 text-primary' />
           </Button>
           <Button variant='ghost' size='icon' className='h-9 w-9'>
-            <Camera className='h-5 w-5 text-emerald-500' />
+            <Camera className='h-5 w-5 text-primary' />
           </Button>
           <Button
             size='icon'
-            className='h-9 w-9 rounded-full bg-emerald-500 hover:bg-emerald-600'
+            className='h-9 w-9 rounded-full bg-primary hover:bg-primary/90'
             onClick={handleSend}
           >
             <Send className='h-4 w-4' />

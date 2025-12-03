@@ -69,11 +69,11 @@ function SearchResults() {
         ) : (
           <div
             className={`flex cursor-pointer items-center gap-3 px-4 py-3 ${
-              active ? 'bg-emerald-50 dark:bg-emerald-950/50' : ''
+              active ? 'bg-theme-accent-light' : ''
             }`}
           >
             <Avatar className='h-10 w-10'>
-              <AvatarFallback className='bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 text-sm'>
+              <AvatarFallback className='bg-theme-accent-light text-theme-accent-text text-sm'>
                 {item.icon}
               </AvatarFallback>
             </Avatar>

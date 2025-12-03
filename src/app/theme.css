@@ -5,6 +5,12 @@ body {
 :root {
   --font-sans: var(--font-inter);
   --header-height: calc(var(--spacing) * 12 + 1px);
+  /* Theme accent colors - light variants */
+  --theme-accent-light: oklch(0.95 0.05 160);
+  --theme-accent-medium: oklch(0.85 0.1 160);
+  --theme-accent-text: oklch(0.35 0.15 160);
+  --theme-gradient-from: oklch(0.97 0.02 160 / 0.5);
+  --theme-gradient-dark-from: oklch(0.2 0.05 160 / 0.2);
 }
 
 .theme-scaled {
@@ -30,6 +36,11 @@ body {
 .theme-default-scaled {
   --primary: var(--color-neutral-600);
   --primary-foreground: var(--color-neutral-50);
+  --theme-accent-light: oklch(0.95 0 0);
+  --theme-accent-medium: oklch(0.85 0 0);
+  --theme-accent-text: oklch(0.35 0 0);
+  --theme-gradient-from: oklch(0.97 0 0 / 0.5);
+  --theme-gradient-dark-from: oklch(0.2 0 0 / 0.2);
 
   @variant dark {
     --primary: var(--color-neutral-500);
@@ -37,10 +48,31 @@ body {
   }
 }
 
+.theme-emerald,
+.theme-emerald-scaled {
+  --primary: var(--color-emerald-600);
+  --primary-foreground: var(--color-emerald-50);
+  --theme-accent-light: oklch(0.95 0.05 160);
+  --theme-accent-medium: oklch(0.85 0.1 160);
+  --theme-accent-text: oklch(0.35 0.15 160);
+  --theme-gradient-from: oklch(0.97 0.02 160 / 0.5);
+  --theme-gradient-dark-from: oklch(0.2 0.05 160 / 0.2);
+
+  @variant dark {
+    --primary: var(--color-emerald-500);
+    --primary-foreground: var(--color-emerald-50);
+  }
+}
+
 .theme-blue,
 .theme-blue-scaled {
   --primary: var(--color-blue-600);
   --primary-foreground: var(--color-blue-50);
+  --theme-accent-light: oklch(0.95 0.05 250);
+  --theme-accent-medium: oklch(0.85 0.1 250);
+  --theme-accent-text: oklch(0.35 0.15 250);
+  --theme-gradient-from: oklch(0.97 0.02 250 / 0.5);
+  --theme-gradient-dark-from: oklch(0.2 0.05 250 / 0.2);
 
   @variant dark {
     --primary: var(--color-blue-500);
@@ -52,6 +84,11 @@ body {
 .theme-green-scaled {
   --primary: var(--color-lime-600);
   --primary-foreground: var(--color-lime-50);
+  --theme-accent-light: oklch(0.95 0.05 130);
+  --theme-accent-medium: oklch(0.85 0.1 130);
+  --theme-accent-text: oklch(0.35 0.15 130);
+  --theme-gradient-from: oklch(0.97 0.02 130 / 0.5);
+  --theme-gradient-dark-from: oklch(0.2 0.05 130 / 0.2);
 
   @variant dark {
     --primary: var(--color-lime-600);
@@ -63,6 +100,11 @@ body {
 .theme-amber-scaled {
   --primary: var(--color-amber-600);
   --primary-foreground: var(--color-amber-50);
+  --theme-accent-light: oklch(0.95 0.05 85);
+  --theme-accent-medium: oklch(0.85 0.1 85);
+  --theme-accent-text: oklch(0.35 0.15 85);
+  --theme-gradient-from: oklch(0.97 0.02 85 / 0.5);
+  --theme-gradient-dark-from: oklch(0.2 0.05 85 / 0.2);
 
   @variant dark {
     --primary: var(--color-amber-500);
@@ -75,6 +117,11 @@ body {
   --font-sans: var(--font-mono);
   --primary: var(--color-neutral-600);
   --primary-foreground: var(--color-neutral-50);
+  --theme-accent-light: oklch(0.95 0 0);
+  --theme-accent-medium: oklch(0.85 0 0);
+  --theme-accent-text: oklch(0.35 0 0);
+  --theme-gradient-from: oklch(0.97 0 0 / 0.5);
+  --theme-gradient-dark-from: oklch(0.2 0 0 / 0.2);
 
   @variant dark {
     --primary: var(--color-neutral-500);

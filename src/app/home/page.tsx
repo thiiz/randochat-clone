@@ -63,7 +63,7 @@ export default async function Page() {
   }
 
   return (
-    <div className='flex h-screen flex-col bg-gradient-to-b from-emerald-50/50 to-white dark:from-emerald-950/20 dark:to-background'>
+    <div className='flex h-screen flex-col bg-gradient-to-b from-theme-gradient-from to-white dark:from-theme-gradient-dark-from dark:to-background'>
       {/* Header */}
       <div className='flex items-center justify-between border-b px-4 py-3'>
         <div className='flex items-center gap-3'>
@@ -88,9 +88,9 @@ export default async function Page() {
                   href={`/chat/${fav.id}`}
                   className='flex flex-col items-center gap-2'
                 >
-                  <Avatar className='h-14 w-14 border-2 border-emerald-500'>
+                  <Avatar className='h-14 w-14 border-2 border-primary'>
                     <AvatarImage src={fav.image || undefined} />
-                    <AvatarFallback className='bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300'>
+                    <AvatarFallback className='bg-theme-accent-light text-theme-accent-text'>
                       {getInitials(fav.name)}
                     </AvatarFallback>
                   </Avatar>
@@ -113,7 +113,7 @@ export default async function Page() {
                 className='hover:bg-muted/50 flex items-start gap-3 rounded-lg p-3 transition-colors'
               >
                 <Avatar className='h-12 w-12'>
-                  <AvatarFallback className='bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300'>
+                  <AvatarFallback className='bg-theme-accent-light text-theme-accent-text'>
                     {getInitials(conv.name)}
                   </AvatarFallback>
                 </Avatar>
@@ -122,7 +122,7 @@ export default async function Page() {
                     <span className='font-medium'>{conv.name}</span>
                     <div className='flex items-center gap-2'>
                       {conv.unreadCount > 0 && (
-                        <Badge className='h-5 min-w-5 justify-center rounded-full bg-emerald-500 px-1.5 text-[10px] hover:bg-emerald-500'>
+                        <Badge className='h-5 min-w-5 justify-center rounded-full bg-primary px-1.5 text-[10px] hover:bg-primary'>
                           {conv.unreadCount}
                         </Badge>
                       )}
@@ -142,12 +142,12 @@ export default async function Page() {
 
       {/* Bottom Navigation */}
       <div className='flex items-center justify-around border-t py-3'>
-        <Button variant='ghost' size='icon' className='text-emerald-600'>
+        <Button variant='ghost' size='icon' className='text-primary'>
           <Home className='h-5 w-5' />
         </Button>
         <Button
           size='icon'
-          className='h-12 w-12 rounded-full bg-emerald-500 hover:bg-emerald-600'
+          className='h-12 w-12 rounded-full bg-primary hover:bg-primary/90'
         >
           <Shuffle className='h-5 w-5' />
         </Button>
