@@ -61,6 +61,7 @@ function SearchResults() {
   return (
     <KBarResults
       items={results}
+      maxHeight={300}
       onRender={({ item, active }) =>
         typeof item === 'string' ? (
           <div className='text-muted-foreground px-4 py-2 text-xs uppercase'>
@@ -68,9 +69,8 @@ function SearchResults() {
           </div>
         ) : (
           <div
-            className={`flex cursor-pointer items-center gap-3 px-4 py-3 ${
-              active ? 'bg-theme-accent-light' : ''
-            }`}
+            className={`flex cursor-pointer items-center gap-3 px-4 py-3 ${active ? 'bg-theme-accent-light text-theme-accent-text' : ''
+              }`}
           >
             <Avatar className='h-10 w-10'>
               <AvatarFallback className='bg-theme-accent-light text-theme-accent-text text-sm'>
@@ -80,7 +80,7 @@ function SearchResults() {
             <div className='flex-1 min-w-0'>
               <p className='font-medium text-sm'>{item.name}</p>
               {item.subtitle && (
-                <p className='text-muted-foreground text-xs truncate'>
+                <p className={`text-xs truncate ${active ? 'text-theme-accent-text/70' : 'text-muted-foreground'}`}>
                   {item.subtitle}
                 </p>
               )}
@@ -105,7 +105,7 @@ export function ConversationsSearch({
       icon: getInitials(conv.name),
       keywords: conv.name.toLowerCase(),
       section: 'Conversas',
-      perform: () => router.push(`/chat/${conv.id}`)
+      perform: () => router.push(`/home/chat/${conv.id}`)
     }));
   }, [conversations, router]);
 
@@ -121,9 +121,7 @@ export function ConversationsSearch({
                 defaultPlaceholder='Buscar conversa...'
               />
             </div>
-            <div className='max-h-[300px] overflow-y-auto'>
-              <SearchResults />
-            </div>
+            <SearchResults />
           </KBarAnimator>
         </KBarPositioner>
       </KBarPortal>
