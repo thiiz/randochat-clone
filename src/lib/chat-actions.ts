@@ -9,6 +9,37 @@ async function getSessionCookie() {
   return cookieStore.toString();
 }
 
+const RATE_LIMIT_SECONDS = 10;
+
+async function checkRateLimit(
+  userId: string,
+  action: string
+): Promise<{ allowed: boolean; retryAfter?: number }> {
+  const rateLimit = await prisma.rateLimit.findUnique({
+    where: { userId_action: { userId, action } }
+  });
+
+  if (!rateLimit) {
+    return { allowed: true };
+  }
+
+  const elapsed = (Date.now() - rateLimit.lastAttempt.getTime()) / 1000;
+
+  if (elapsed < RATE_LIMIT_SECONDS) {
+    return { allowed: false, retryAfter: Math.ceil(RATE_LIMIT_SECONDS - elapsed) };
+  }
+
+  return { allowed: true };
+}
+
+async function setRateLimit(userId: string, action: string): Promise<void> {
+  await prisma.rateLimit.upsert({
+    where: { userId_action: { userId, action } },
+    update: { lastAttempt: new Date() },
+    create: { userId, action, lastAttempt: new Date() }
+  });
+}
+
 export async function getConversations() {
   const session = await auth.api.getSession({
     headers: {
@@ -236,6 +267,7 @@ export async function findRandomUser(): Promise<{
   success: boolean;
   conversationId?: string;
   error?: string;
+  retryAfter?: number;
 }> {
   const session = await auth.api.getSession({
     headers: {
@@ -248,6 +280,16 @@ export async function findRandomUser(): Promise<{
   }
 
   const currentUserId = session.user.id;
+
+  // Rate limiting
+  const rateLimitCheck = await checkRateLimit(currentUserId, 'random_search');
+  if (!rateLimitCheck.allowed) {
+    return {
+      success: false,
+      error: `Aguarde ${rateLimitCheck.retryAfter}s para tentar novamente`,
+      retryAfter: rateLimitCheck.retryAfter
+    };
+  }
 
   // Busca IDs de usuários que já têm conversa com o usuário atual
   const existingConversations = await prisma.conversation.findMany({
@@ -277,7 +319,9 @@ export async function findRandomUser(): Promise<{
   });
 
   if (onlineUsers.length === 0) {
-    return { success: false, error: 'Nenhum usuário online no momento' };
+    // Aplica rate limit apenas quando não encontra usuário
+    await setRateLimit(currentUserId, 'random_search');
+    return { success: false, error: 'Nenhum usuário online no momento', retryAfter: RATE_LIMIT_SECONDS };
   }
 
   // Seleciona um usuário aleatório

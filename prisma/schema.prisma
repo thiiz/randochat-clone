@@ -127,3 +127,13 @@ model Verification {
 
   @@map("verification")
 }
+
+model RateLimit {
+  id         String   @id @default(cuid())
+  userId     String
+  action     String   // ex: "random_search", "send_message", etc
+  lastAttempt DateTime @default(now())
+
+  @@unique([userId, action])
+  @@map("rate_limit")
+}

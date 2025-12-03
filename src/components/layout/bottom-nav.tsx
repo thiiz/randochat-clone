@@ -3,7 +3,7 @@
 import { HomeIcon, MessageCircleIcon, SettingsIcon, Loader2Icon } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { findRandomUser } from '@/lib/chat-actions';
 import { toast } from 'sonner';
@@ -12,6 +12,17 @@ export function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
   const [isSearching, setIsSearching] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+
+    const timer = setInterval(() => {
+      setCooldown((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
   const isActive = (path: string) => {
     if (path === '/home') {
@@ -20,8 +31,8 @@ export function BottomNav() {
     return pathname.startsWith(path);
   };
 
-  const handleRandomConnect = async () => {
-    if (isSearching) return;
+  const handleRandomConnect = useCallback(async () => {
+    if (isSearching || cooldown > 0) return;
 
     setIsSearching(true);
     try {
@@ -31,13 +42,18 @@ export function BottomNav() {
         router.push(`/home/chat/${result.conversationId}`);
       } else {
         toast.error(result.error || 'Erro ao buscar usuário');
+        if (result.retryAfter) {
+          setCooldown(result.retryAfter);
+        }
       }
     } catch {
       toast.error('Erro ao conectar. Tente novamente.');
     } finally {
       setIsSearching(false);
     }
-  };
+  }, [isSearching, cooldown, router]);
+
+  const isDisabled = isSearching || cooldown > 0;
 
   return (
     <div className='relative border-t bg-white dark:bg-background'>
@@ -45,11 +61,13 @@ export function BottomNav() {
       <div className='absolute left-1/2 -translate-x-1/2 -top-7'>
         <button
           onClick={handleRandomConnect}
-          disabled={isSearching}
+          disabled={isDisabled}
           className='flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg hover:bg-primary/90 transition-colors disabled:opacity-70'
         >
           {isSearching ? (
             <Loader2Icon className='h-6 w-6 animate-spin' />
+          ) : cooldown > 0 ? (
+            <span className='text-sm font-semibold'>{cooldown}</span>
           ) : (
             <MessageCircleIcon className='h-6 w-6' />
           )}
