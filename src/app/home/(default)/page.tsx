@@ -99,7 +99,7 @@ export default async function Page() {
             {mockFavorites.map((fav) => (
               <Link
                 key={fav.id}
-                href={`/chat/${fav.id}`}
+                href={`/home/chat/${fav.id}`}
                 className='flex flex-col items-center gap-2'
               >
                 <Avatar className='h-14 w-14 border-2 border-primary'>
@@ -119,11 +119,11 @@ export default async function Page() {
         <Separator className='mb-4' />
 
         {/* Conversations List */}
-        <div className='space-y-1'>
+        <div className='space-y-1 mb-6'>
           {mockConversations.map((conv) => (
             <Link
               key={conv.id}
-              href={`/chat/${conv.id}`}
+              href={`/home/chat/${conv.id}`}
               className='hover:bg-muted/50 flex items-start gap-3 rounded-lg p-3 transition-colors'
             >
               <Avatar className='h-12 w-12'>
