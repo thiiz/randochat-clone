@@ -249,13 +249,28 @@ export async function findRandomUser(): Promise<{
 
   const currentUserId = session.user.id;
 
+  // Busca IDs de usuários que já têm conversa com o usuário atual
+  const existingConversations = await prisma.conversation.findMany({
+    where: {
+      OR: [{ user1Id: currentUserId }, { user2Id: currentUserId }]
+    },
+    select: { user1Id: true, user2Id: true }
+  });
+
+  const usersWithConversation = existingConversations.map((conv) =>
+    conv.user1Id === currentUserId ? conv.user2Id : conv.user1Id
+  );
+
   // Considera "online" quem foi visto nos últimos 5 minutos
   const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
 
-  // Busca usuários online (exceto o atual)
+  // Busca usuários online (exceto o atual e quem já tem conversa)
   const onlineUsers = await prisma.user.findMany({
     where: {
-      id: { not: currentUserId },
+      id: {
+        not: currentUserId,
+        notIn: usersWithConversation
+      },
       lastSeenAt: { gte: fiveMinutesAgo }
     },
     select: { id: true }
@@ -267,20 +282,6 @@ export async function findRandomUser(): Promise<{
 
   // Seleciona um usuário aleatório
   const randomUser = onlineUsers[Math.floor(Math.random() * onlineUsers.length)];
-
-  // Verifica se já existe conversa entre os dois
-  const existingConversation = await prisma.conversation.findFirst({
-    where: {
-      OR: [
-        { user1Id: currentUserId, user2Id: randomUser.id },
-        { user1Id: randomUser.id, user2Id: currentUserId }
-      ]
-    }
-  });
-
-  if (existingConversation) {
-    return { success: true, conversationId: existingConversation.id };
-  }
 
   // Cria nova conversa
   const newConversation = await prisma.conversation.create({
