@@ -1,5 +1,7 @@
 'use client';
 
+import { HeartbeatProvider } from '@/components/heartbeat-provider';
+import { OnlineIndicator } from '@/components/online-indicator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,7 +44,8 @@ const mockMessages = [
 
 const mockConversation = {
   id: '1',
-  name: 'Anônimo #1234'
+  name: 'Anônimo #1234',
+  lastSeenAt: new Date() // Mock - será substituído por dados reais
 };
 
 function getInitials(name: string) {
@@ -75,120 +78,133 @@ export default function ChatPage() {
   };
 
   return (
-    <div className='flex h-screen flex-col bg-gradient-to-b from-theme-gradient-from to-white dark:from-theme-gradient-dark-from dark:to-background'>
-      {/* Header */}
-      <div className='flex items-center justify-between border-b px-4 py-3'>
-        <div className='flex items-center gap-3'>
-          <Link href='/home'>
-            <Button variant='ghost' size='icon' className='h-8 w-8'>
-              <ArrowLeft className='h-4 w-4' />
-            </Button>
-          </Link>
-        </div>
-        <div className='flex flex-col items-center'>
-          <Avatar className='h-10 w-10 border-2 border-primary'>
-            <AvatarFallback className='bg-theme-accent-light text-theme-accent-text'>
-              {getInitials(mockConversation.name)}
-            </AvatarFallback>
-          </Avatar>
-          <span className='mt-1 text-sm font-medium'>
-            {mockConversation.name}
-          </span>
-        </div>
-        <Button variant='ghost' size='icon' className='h-8 w-8'>
-          <MoreVertical className='h-4 w-4' />
-        </Button>
-      </div>
-
-      {/* Messages */}
-      <ScrollArea className='flex-1 px-4'>
-        <div className='py-4'>
-          {/* Unread indicator */}
-          <div className='mb-4 flex justify-center'>
-            <Button
-              variant='ghost'
-              size='sm'
-              className='h-auto gap-1 rounded-full bg-theme-accent-light px-3 py-1 text-xs text-theme-accent-text hover:bg-theme-accent-medium'
-            >
-              <ChevronUp className='h-3 w-3' />2 mensagens não lidas
-            </Button>
+    <HeartbeatProvider>
+      <div className='flex h-screen flex-col bg-gradient-to-b from-theme-gradient-from to-white dark:from-theme-gradient-dark-from dark:to-background'>
+        {/* Header */}
+        <div className='flex items-center justify-between border-b px-4 py-3'>
+          <div className='flex items-center gap-3'>
+            <Link href='/home'>
+              <Button variant='ghost' size='icon' className='h-8 w-8'>
+                <ArrowLeft className='h-4 w-4' />
+              </Button>
+            </Link>
           </div>
-
-          {/* Messages list */}
-          <div className='space-y-4'>
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex ${msg.senderId === 'me' ? 'justify-end' : 'justify-start'}`}
-              >
-                {msg.senderId !== 'me' && (
-                  <Avatar className='mr-2 h-8 w-8 self-end'>
-                    <AvatarFallback className='bg-theme-accent-light text-theme-accent-text text-xs'>
-                      {getInitials(mockConversation.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                )}
-                <div
-                  className={`max-w-[75%] rounded-2xl px-4 py-2 ${
-                    msg.senderId === 'me'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted'
-                  }`}
-                >
-                  <p className='text-sm'>{msg.content}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Typing indicator */}
-          {isTyping && (
-            <div className='mt-4 flex items-center gap-2'>
-              <Avatar className='h-8 w-8'>
-                <AvatarFallback className='bg-theme-accent-light text-theme-accent-text text-xs'>
+          <div className='flex flex-col items-center'>
+            <div className='relative'>
+              <Avatar className='h-10 w-10 border-2 border-primary'>
+                <AvatarFallback className='bg-theme-accent-light text-theme-accent-text'>
                   {getInitials(mockConversation.name)}
                 </AvatarFallback>
               </Avatar>
-              <div className='bg-muted rounded-2xl px-4 py-2'>
-                <div className='flex gap-1'>
-                  <span className='h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-0.3s]' />
-                  <span className='h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-0.15s]' />
-                  <span className='h-2 w-2 animate-bounce rounded-full bg-primary' />
+              <OnlineIndicator
+                lastSeenAt={mockConversation.lastSeenAt}
+                size='sm'
+                className='absolute -bottom-0.5 -right-0.5 rounded-full border-2 border-background'
+              />
+            </div>
+            <span className='mt-1 text-sm font-medium'>
+              {mockConversation.name}
+            </span>
+            <OnlineIndicator
+              lastSeenAt={mockConversation.lastSeenAt}
+              showText
+              className='mt-0.5'
+            />
+          </div>
+          <Button variant='ghost' size='icon' className='h-8 w-8'>
+            <MoreVertical className='h-4 w-4' />
+          </Button>
+        </div>
+
+        {/* Messages */}
+        <ScrollArea className='flex-1 px-4'>
+          <div className='py-4'>
+            {/* Unread indicator */}
+            <div className='mb-4 flex justify-center'>
+              <Button
+                variant='ghost'
+                size='sm'
+                className='h-auto gap-1 rounded-full bg-theme-accent-light px-3 py-1 text-xs text-theme-accent-text hover:bg-theme-accent-medium'
+              >
+                <ChevronUp className='h-3 w-3' />2 mensagens não lidas
+              </Button>
+            </div>
+
+            {/* Messages list */}
+            <div className='space-y-4'>
+              {messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex ${msg.senderId === 'me' ? 'justify-end' : 'justify-start'}`}
+                >
+                  {msg.senderId !== 'me' && (
+                    <Avatar className='mr-2 h-8 w-8 self-end'>
+                      <AvatarFallback className='bg-theme-accent-light text-theme-accent-text text-xs'>
+                        {getInitials(mockConversation.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
+                  <div
+                    className={`max-w-[75%] rounded-2xl px-4 py-2 ${msg.senderId === 'me'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted'
+                      }`}
+                  >
+                    <p className='text-sm'>{msg.content}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Typing indicator */}
+            {isTyping && (
+              <div className='mt-4 flex items-center gap-2'>
+                <Avatar className='h-8 w-8'>
+                  <AvatarFallback className='bg-theme-accent-light text-theme-accent-text text-xs'>
+                    {getInitials(mockConversation.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className='bg-muted rounded-2xl px-4 py-2'>
+                  <div className='flex gap-1'>
+                    <span className='h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-0.3s]' />
+                    <span className='h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-0.15s]' />
+                    <span className='h-2 w-2 animate-bounce rounded-full bg-primary' />
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
-      </ScrollArea>
+            )}
+          </div>
+        </ScrollArea>
 
-      {/* Input */}
-      <div className='border-t px-4 py-3'>
-        <div className='flex items-center gap-2'>
-          <Input
-            placeholder='Digite uma mensagem'
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            className='flex-1'
-          />
-          <Button variant='ghost' size='icon' className='h-9 w-9'>
-            <Smile className='h-5 w-5 text-primary' />
-          </Button>
-          <Button variant='ghost' size='icon' className='h-9 w-9'>
-            <Paperclip className='h-5 w-5 text-primary' />
-          </Button>
-          <Button variant='ghost' size='icon' className='h-9 w-9'>
-            <Camera className='h-5 w-5 text-primary' />
-          </Button>
-          <Button
-            size='icon'
-            className='h-9 w-9 rounded-full bg-primary hover:bg-primary/90'
-            onClick={handleSend}
-          >
-            <Send className='h-4 w-4' />
-          </Button>
+        {/* Input */}
+        <div className='border-t px-4 py-3'>
+          <div className='flex items-center gap-2'>
+            <Input
+              placeholder='Digite uma mensagem'
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+              className='flex-1'
+            />
+            <Button variant='ghost' size='icon' className='h-9 w-9'>
+              <Smile className='h-5 w-5 text-primary' />
+            </Button>
+            <Button variant='ghost' size='icon' className='h-9 w-9'>
+              <Paperclip className='h-5 w-5 text-primary' />
+            </Button>
+            <Button variant='ghost' size='icon' className='h-9 w-9'>
+              <Camera className='h-5 w-5 text-primary' />
+            </Button>
+            <Button
+              size='icon'
+              className='h-9 w-9 rounded-full bg-primary hover:bg-primary/90'
+              onClick={handleSend}
+            >
+              <Send className='h-4 w-4' />
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
+    </HeartbeatProvider>
   );
 }

@@ -1,12 +1,7 @@
-import { UserMenu } from '@/components/layout/user-menu';
+import { OnlineIndicator } from '@/components/online-indicator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { auth } from '@/lib/auth';
-import { Home, Settings, Shuffle } from 'lucide-react';
-import { headers } from 'next/headers';
 import Link from 'next/link';
 import { ConversationsSearch } from '../../../components/conversations-search';
 
@@ -16,8 +11,8 @@ export const metadata = {
 
 // Mock data - será substituído por dados reais do banco
 const mockFavorites = [
-  { id: '1', name: 'Anônimo #1234', image: null },
-  { id: '2', name: 'Anônimo #5678', image: null }
+  { id: '1', name: 'Anônimo #1234', image: null, lastSeenAt: new Date() },
+  { id: '2', name: 'Anônimo #5678', image: null, lastSeenAt: new Date(Date.now() - 30 * 60 * 1000) }
 ];
 
 const mockConversations = [
@@ -26,49 +21,56 @@ const mockConversations = [
     name: 'Anônimo #1234',
     lastMessage: 'Here are 18 recipes for healthy low-carb breakfasts that also happen...',
     time: '11:20',
-    unreadCount: 4
+    unreadCount: 4,
+    lastSeenAt: new Date() // Online agora
   },
   {
     id: '2',
     name: 'Anônimo #5678',
     lastMessage: "So you can't waste surface area with a tattoo that's subpar. That's...",
     time: '11:20',
-    unreadCount: 2
+    unreadCount: 2,
+    lastSeenAt: new Date(Date.now() - 3 * 60 * 1000) // Online há 3 min
   },
   {
     id: '3',
     name: 'Anônimo #9012',
     lastMessage: "Known as the Garden City, it's in full bloom in spring and summer...",
     time: '11:20',
-    unreadCount: 0
+    unreadCount: 0,
+    lastSeenAt: new Date(Date.now() - 30 * 60 * 1000) // Offline há 30 min
   },
   {
     id: '4',
     name: 'Anônimo #3456',
     lastMessage: 'Here are 18 recipes for healthy low-carb breakfasts that also happen...',
     time: '11:20',
-    unreadCount: 0
+    unreadCount: 0,
+    lastSeenAt: new Date(Date.now() - 2 * 60 * 60 * 1000) // Offline há 2h
   },
   {
     id: '5',
     name: 'Anônimo #7890',
     lastMessage: "So you can't waste surface area with a tattoo that's subpar. That's...",
     time: '11:20',
-    unreadCount: 0
+    unreadCount: 0,
+    lastSeenAt: null // Nunca visto
   },
   {
     id: '6',
     name: 'Anônimo #2345',
     lastMessage: "Known as the Garden City, it's in full bloom in spring and summer...",
     time: '11:20',
-    unreadCount: 0
+    unreadCount: 0,
+    lastSeenAt: new Date(Date.now() - 1 * 60 * 1000) // Online há 1 min
   },
   {
     id: '7',
     name: 'Anônimo #6789',
     lastMessage: 'Here are 18 recipes for healthy low-carb breakfasts that also happen...',
     time: '11:20',
-    unreadCount: 0
+    unreadCount: 0,
+    lastSeenAt: new Date(Date.now() - 24 * 60 * 60 * 1000) // Offline há 1 dia
   }
 ];
 
@@ -102,12 +104,19 @@ export default async function Page() {
                 href={`/home/chat/${fav.id}`}
                 className='flex flex-col items-center gap-2'
               >
-                <Avatar className='h-14 w-14 border-2 border-primary'>
-                  <AvatarImage src={fav.image || undefined} />
-                  <AvatarFallback className='bg-theme-accent-light text-theme-accent-text'>
-                    {getInitials(fav.name)}
-                  </AvatarFallback>
-                </Avatar>
+                <div className='relative'>
+                  <Avatar className='h-14 w-14 border-2 border-primary'>
+                    <AvatarImage src={fav.image || undefined} />
+                    <AvatarFallback className='bg-theme-accent-light text-theme-accent-text'>
+                      {getInitials(fav.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <OnlineIndicator
+                    lastSeenAt={fav.lastSeenAt}
+                    size='md'
+                    className='absolute -bottom-0.5 -right-0.5 rounded-full border-2 border-background'
+                  />
+                </div>
                 <span className='max-w-[80px] truncate text-xs font-medium'>
                   {fav.name}
                 </span>
@@ -126,11 +135,18 @@ export default async function Page() {
               href={`/home/chat/${conv.id}`}
               className='hover:bg-muted/50 flex items-start gap-3 rounded-lg p-3 transition-colors'
             >
-              <Avatar className='h-12 w-12'>
-                <AvatarFallback className='bg-theme-accent-light text-theme-accent-text'>
-                  {getInitials(conv.name)}
-                </AvatarFallback>
-              </Avatar>
+              <div className='relative'>
+                <Avatar className='h-12 w-12'>
+                  <AvatarFallback className='bg-theme-accent-light text-theme-accent-text'>
+                    {getInitials(conv.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <OnlineIndicator
+                  lastSeenAt={conv.lastSeenAt}
+                  size='sm'
+                  className='absolute -bottom-0.5 -right-0.5 rounded-full border-2 border-background'
+                />
+              </div>
               <div className='min-w-0 flex-1'>
                 <div className='flex items-center justify-between'>
                   <span className='font-medium'>{conv.name}</span>
