@@ -1,6 +1,7 @@
 'use client';
 import React from 'react';
 import { ActiveThemeProvider } from '../active-theme';
+import { TopLoader } from './top-loader';
 
 export default function Providers({
   activeThemeValue,
@@ -12,6 +13,7 @@ export default function Providers({
   return (
     <>
       <ActiveThemeProvider initialTheme={activeThemeValue}>
+        <TopLoader />
         {children}
       </ActiveThemeProvider>
     </>

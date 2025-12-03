@@ -5,7 +5,6 @@ import ThemeProvider from '@/components/layout/ThemeToggle/theme-provider';
 import { cn } from '@/lib/utils';
 import type { Metadata, Viewport } from 'next';
 import { cookies } from 'next/headers';
-import NextTopLoader from 'nextjs-toploader';
 import './globals.css';
 import './theme.css';
 
@@ -55,7 +54,6 @@ export default async function RootLayout({
           fontVariables
         )}
       >
-        <NextTopLoader showSpinner={false} />
         <ThemeProvider
           attribute='class'
           defaultTheme='system'
