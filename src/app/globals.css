@@ -128,6 +128,48 @@
   }
 }
 
+/* Mobile-native scrollbar - overlay style with auto-hide */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) transparent;
+}
+
+/* Webkit browsers - overlay scrollbar */
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+  background: transparent;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--primary) 50%, transparent);
+  border-radius: 10px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+/* Enable overlay scrollbar behavior (macOS-like) */
+@supports (scrollbar-gutter: stable) {
+  * {
+    scrollbar-gutter: auto;
+  }
+}
+
+/* Force overlay mode on webkit */
+:root {
+  overflow: overlay;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 /* View Transition Wave Effect */
 ::view-transition-old(root),
 ::view-transition-new(root) {
