@@ -1,6 +1,6 @@
 'use client';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -14,7 +14,6 @@ import {
   Smile
 } from 'lucide-react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
 import { useState } from 'react';
 
 // Mock data - será substituído por dados reais
@@ -43,13 +42,7 @@ const mockMessages = [
 
 const mockConversation = {
   id: '1',
-  title: 'Avengers Endgame',
-  participants: [
-    { id: '1', name: 'User 1' },
-    { id: '2', name: 'User 2' },
-    { id: '3', name: 'User 3' },
-    { id: '4', name: 'User 4' }
-  ]
+  name: 'Anônimo #1234'
 };
 
 function getInitials(name: string) {
@@ -62,9 +55,9 @@ function getInitials(name: string) {
 }
 
 export default function ChatPage() {
-  const params = useParams();
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState(mockMessages);
+  const [isTyping, setIsTyping] = useState(true);
 
   const handleSend = () => {
     if (!message.trim()) return;
@@ -95,11 +88,11 @@ export default function ChatPage() {
         <div className='flex flex-col items-center'>
           <Avatar className='h-10 w-10 border-2 border-emerald-500'>
             <AvatarFallback className='bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300'>
-              {getInitials(mockConversation.title)}
+              {getInitials(mockConversation.name)}
             </AvatarFallback>
           </Avatar>
           <span className='mt-1 text-sm font-medium'>
-            {mockConversation.title}
+            {mockConversation.name}
           </span>
         </div>
         <Button variant='ghost' size='icon' className='h-8 w-8'>
@@ -130,8 +123,8 @@ export default function ChatPage() {
               >
                 {msg.senderId !== 'me' && (
                   <Avatar className='mr-2 h-8 w-8 self-end'>
-                    <AvatarFallback className='bg-muted text-xs'>
-                      U
+                    <AvatarFallback className='bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 text-xs'>
+                      {getInitials(mockConversation.name)}
                     </AvatarFallback>
                   </Avatar>
                 )}
@@ -148,38 +141,23 @@ export default function ChatPage() {
             ))}
           </div>
 
-          {/* Seen by */}
-          <div className='mt-4 flex items-center justify-end gap-2'>
-            <span className='text-muted-foreground text-xs'>
-              Visto por 4 pessoas
-            </span>
-            <div className='flex -space-x-1'>
-              {mockConversation.participants.slice(0, 4).map((p, i) => (
-                <Avatar
-                  key={i}
-                  className='h-5 w-5 border border-white dark:border-background'
-                >
-                  <AvatarFallback className='bg-muted text-[8px]'>
-                    {getInitials(p.name)}
-                  </AvatarFallback>
-                </Avatar>
-              ))}
-            </div>
-          </div>
-
           {/* Typing indicator */}
-          <div className='mt-4 flex items-center gap-2'>
-            <Avatar className='h-8 w-8'>
-              <AvatarFallback className='bg-muted text-xs'>U</AvatarFallback>
-            </Avatar>
-            <div className='bg-muted rounded-2xl px-4 py-2'>
-              <div className='flex gap-1'>
-                <span className='h-2 w-2 animate-bounce rounded-full bg-emerald-500 [animation-delay:-0.3s]' />
-                <span className='h-2 w-2 animate-bounce rounded-full bg-emerald-500 [animation-delay:-0.15s]' />
-                <span className='h-2 w-2 animate-bounce rounded-full bg-emerald-500' />
+          {isTyping && (
+            <div className='mt-4 flex items-center gap-2'>
+              <Avatar className='h-8 w-8'>
+                <AvatarFallback className='bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 text-xs'>
+                  {getInitials(mockConversation.name)}
+                </AvatarFallback>
+              </Avatar>
+              <div className='bg-muted rounded-2xl px-4 py-2'>
+                <div className='flex gap-1'>
+                  <span className='h-2 w-2 animate-bounce rounded-full bg-emerald-500 [animation-delay:-0.3s]' />
+                  <span className='h-2 w-2 animate-bounce rounded-full bg-emerald-500 [animation-delay:-0.15s]' />
+                  <span className='h-2 w-2 animate-bounce rounded-full bg-emerald-500' />
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </ScrollArea>
 

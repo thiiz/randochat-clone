@@ -2,13 +2,13 @@ import { UserMenu } from '@/components/layout/user-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { auth } from '@/lib/auth';
-import { Home, Search, Settings, Shuffle } from 'lucide-react';
+import { Home, Settings, Shuffle } from 'lucide-react';
 import { headers } from 'next/headers';
 import Link from 'next/link';
+import { ConversationsSearch } from './_components/conversations-search';
 
 export const metadata = {
   title: 'Conversas - RandoChat'
@@ -16,34 +16,31 @@ export const metadata = {
 
 // Mock data - será substituído por dados reais do banco
 const mockFavorites = [
-  { id: '1', title: 'Avengers Endgame', participants: 5, image: null },
-  { id: '2', title: 'Paris Stories', participants: 3, image: null }
+  { id: '1', name: 'Anônimo #1234', image: null },
+  { id: '2', name: 'Anônimo #5678', image: null }
 ];
 
 const mockConversations = [
   {
     id: '1',
-    title: 'Keto recipes',
+    name: 'Anônimo #1234',
     lastMessage: 'Here are 18 recipes for healthy low-carb breakfasts that also happen...',
     time: '11:20',
-    unreadCount: 4,
-    participants: [{ name: 'User 1' }, { name: 'User 2' }, { name: 'User 3' }]
+    unreadCount: 4
   },
   {
     id: '2',
-    title: 'Tattoo ideas',
+    name: 'Anônimo #5678',
     lastMessage: "So you can't waste surface area with a tattoo that's subpar. That's...",
     time: '11:20',
-    unreadCount: 2,
-    participants: [{ name: 'User 1' }, { name: 'User 2' }]
+    unreadCount: 2
   },
   {
     id: '3',
-    title: 'Best places in Victoria',
+    name: 'Anônimo #9012',
     lastMessage: "Known as the Garden City, it's in full bloom in spring and summer...",
     time: '11:20',
-    unreadCount: 0,
-    participants: [{ name: 'User 1' }]
+    unreadCount: 0
   }
 ];
 
@@ -76,15 +73,7 @@ export default async function Page() {
       </div>
 
       {/* Search */}
-      <div className='px-4 py-3'>
-        <div className='relative'>
-          <Search className='text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2' />
-          <Input
-            placeholder='Buscar nova conversa'
-            className='bg-muted/50 pl-9'
-          />
-        </div>
-      </div>
+      <ConversationsSearch conversations={mockConversations} />
 
       <ScrollArea className='flex-1 px-4'>
           {/* Favorites Section */}
@@ -102,11 +91,11 @@ export default async function Page() {
                   <Avatar className='h-14 w-14 border-2 border-emerald-500'>
                     <AvatarImage src={fav.image || undefined} />
                     <AvatarFallback className='bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300'>
-                      {getInitials(fav.title)}
+                      {getInitials(fav.name)}
                     </AvatarFallback>
                   </Avatar>
                   <span className='max-w-[80px] truncate text-xs font-medium'>
-                    {fav.title}
+                    {fav.name}
                   </span>
                 </Link>
               ))}
@@ -125,40 +114,26 @@ export default async function Page() {
               >
                 <Avatar className='h-12 w-12'>
                   <AvatarFallback className='bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300'>
-                    {getInitials(conv.title)}
+                    {getInitials(conv.name)}
                   </AvatarFallback>
                 </Avatar>
                 <div className='min-w-0 flex-1'>
                   <div className='flex items-center justify-between'>
-                    <span className='font-medium'>{conv.title}</span>
-                    <span className='text-muted-foreground text-xs'>
-                      {conv.time}
-                    </span>
+                    <span className='font-medium'>{conv.name}</span>
+                    <div className='flex items-center gap-2'>
+                      {conv.unreadCount > 0 && (
+                        <Badge className='h-5 min-w-5 justify-center rounded-full bg-emerald-500 px-1.5 text-[10px] hover:bg-emerald-500'>
+                          {conv.unreadCount}
+                        </Badge>
+                      )}
+                      <span className='text-muted-foreground text-xs'>
+                        {conv.time}
+                      </span>
+                    </div>
                   </div>
                   <p className='text-muted-foreground mt-1 truncate text-sm'>
                     {conv.lastMessage}
                   </p>
-                  <div className='mt-2 flex items-center justify-between'>
-                    <div className='flex -space-x-2'>
-                      {conv.participants.slice(0, 3).map((p, i) => (
-                        <Avatar key={i} className='h-6 w-6 border-2 border-white dark:border-background'>
-                          <AvatarFallback className='bg-muted text-[10px]'>
-                            {getInitials(p.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                      ))}
-                      {conv.participants.length > 3 && (
-                        <div className='flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-emerald-100 text-[10px] font-medium text-emerald-700 dark:border-background dark:bg-emerald-900 dark:text-emerald-300'>
-                          +{conv.participants.length - 3}
-                        </div>
-                      )}
-                    </div>
-                    {conv.unreadCount > 0 && (
-                      <Badge className='h-5 min-w-5 justify-center rounded-full bg-emerald-500 px-1.5 text-[10px] hover:bg-emerald-500'>
-                        {conv.unreadCount}
-                      </Badge>
-                    )}
-                  </div>
                 </div>
               </Link>
             ))}
@@ -176,8 +151,10 @@ export default async function Page() {
         >
           <Shuffle className='h-5 w-5' />
         </Button>
-        <Button variant='ghost' size='icon'>
-          <Settings className='h-5 w-5' />
+        <Button variant='ghost' size='icon' asChild>
+          <Link href='/settings'>
+            <Settings className='h-5 w-5' />
+          </Link>
         </Button>
       </div>
     </div>
