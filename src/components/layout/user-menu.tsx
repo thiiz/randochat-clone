@@ -1,6 +1,6 @@
 'use client';
 
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import type { User } from '@/lib/auth';
-import { signOut } from '@/lib/auth-client';
+import { signOut, useSession } from '@/lib/auth-client';
 import { IconLogout, IconUser } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 
@@ -19,8 +19,12 @@ interface UserMenuProps {
   user: User;
 }
 
-export function UserMenu({ user }: UserMenuProps) {
+export function UserMenu({ user: initialUser }: UserMenuProps) {
   const router = useRouter();
+  const { data: session } = useSession();
+
+  // Usa dados da sessão do cliente se disponível, senão usa os dados iniciais do servidor
+  const user = session?.user || initialUser;
 
   const handleLogout = async () => {
     await signOut();
@@ -43,6 +47,7 @@ export function UserMenu({ user }: UserMenuProps) {
       <DropdownMenuTrigger asChild>
         <Button variant='ghost' className='relative h-8 w-8 rounded-full'>
           <Avatar className='h-8 w-8'>
+            <AvatarImage src={user.image || undefined} />
             <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
           </Avatar>
         </Button>

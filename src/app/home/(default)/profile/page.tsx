@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useSession } from '@/lib/auth-client';
+import { authClient, useSession } from '@/lib/auth-client';
 import { Camera, Loader2 } from 'lucide-react';
 import { useRef, useState, useTransition } from 'react';
 import { toast } from 'sonner';
@@ -91,6 +91,8 @@ export default function ProfilePage() {
       if (result.error) {
         toast.error(result.error);
       } else {
+        // Força refresh da sessão para atualizar os dados em todos os componentes
+        await authClient.getSession({ fetchOptions: { cache: 'no-store' } });
         toast.success('Perfil atualizado com sucesso!');
       }
     });
