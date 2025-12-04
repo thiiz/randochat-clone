@@ -42,6 +42,18 @@ export function useRealtimeConversations(initialConversations: Conversation[]) {
       .on(
         'postgres_changes',
         {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'message'
+        },
+        () => {
+          // Atualiza quando mensagens são marcadas como lidas
+          router.refresh();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
           event: 'INSERT',
           schema: 'public',
           table: 'conversation'

@@ -7,7 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useRealtimeMessages } from '@/hooks/use-realtime-messages';
 import { useSession } from '@/lib/auth-client';
-import { getConversationMessages, sendMessage } from '@/lib/chat-actions';
+import {
+  getConversationMessages,
+  markMessagesAsRead,
+  sendMessage
+} from '@/lib/chat-actions';
 import {
   ArrowLeft,
   Camera,
@@ -70,8 +74,13 @@ export default function ChatPage() {
         return [...prev, newMessage];
       });
       setTimeout(scrollToBottom, 100);
+
+      // Marca como lida se a mensagem é do outro usuário
+      if (newMessage.senderId === 'other') {
+        markMessagesAsRead(conversationId);
+      }
     },
-    [scrollToBottom]
+    [scrollToBottom, conversationId]
   );
 
   useRealtimeMessages({
@@ -86,6 +95,9 @@ export default function ChatPage() {
         const data = await getConversationMessages(conversationId);
         setConversation(data.conversation);
         setMessages(data.messages);
+
+        // Marca mensagens como lidas ao abrir a conversa
+        await markMessagesAsRead(conversationId);
       } catch (error) {
         console.error('Failed to load conversation:', error);
       } finally {

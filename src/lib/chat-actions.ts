@@ -26,7 +26,10 @@ async function checkRateLimit(
   const elapsed = (Date.now() - rateLimit.lastAttempt.getTime()) / 1000;
 
   if (elapsed < RATE_LIMIT_SECONDS) {
-    return { allowed: false, retryAfter: Math.ceil(RATE_LIMIT_SECONDS - elapsed) };
+    return {
+      allowed: false,
+      retryAfter: Math.ceil(RATE_LIMIT_SECONDS - elapsed)
+    };
   }
 
   return { allowed: true };
@@ -68,17 +71,34 @@ export async function getConversations() {
     }
   });
 
+  // Conta mensagens não lidas por conversa (apenas mensagens do outro usuário)
+  const unreadCounts = await prisma.message.groupBy({
+    by: ['conversationId'],
+    where: {
+      conversationId: { in: conversations.map((c) => c.id) },
+      senderId: { not: session.user.id },
+      isRead: false
+    },
+    _count: { id: true }
+  });
+
+  const unreadCountMap = new Map(
+    unreadCounts.map((uc) => [uc.conversationId, uc._count.id])
+  );
+
   return conversations.map((conv) => {
-    const otherUser = conv.user1Id === session.user.id ? conv.user2 : conv.user1;
+    const otherUser =
+      conv.user1Id === session.user.id ? conv.user2 : conv.user1;
     const lastMessage = conv.messages[0];
 
     return {
       id: conv.id,
-      name: otherUser.name || `Anônimo #${otherUser.id.slice(0, 4).toUpperCase()}`,
+      name:
+        otherUser.name || `Anônimo #${otherUser.id.slice(0, 4).toUpperCase()}`,
       image: otherUser.image,
       lastMessage: lastMessage?.content || '',
       lastMessageTime: lastMessage?.createdAt || conv.updatedAt,
-      unreadCount: lastMessage ? (lastMessage.isRead ? 0 : 1) : 0,
+      unreadCount: unreadCountMap.get(conv.id) || 0,
       lastSeenAt: otherUser.lastSeenAt,
       otherUserId: otherUser.id
     };
@@ -116,7 +136,8 @@ export async function getFavoriteConversations() {
 
     return {
       id: fav.conversation.id,
-      name: otherUser.name || `Anônimo #${otherUser.id.slice(0, 4).toUpperCase()}`,
+      name:
+        otherUser.name || `Anônimo #${otherUser.id.slice(0, 4).toUpperCase()}`,
       image: otherUser.image,
       lastSeenAt: otherUser.lastSeenAt,
       otherUserId: otherUser.id
@@ -182,13 +203,15 @@ export async function getConversationMessages(conversationId: string): Promise<{
   return {
     conversation: {
       id: conversation.id,
-      name: otherUser.name || `Anônimo #${otherUser.id.slice(0, 4).toUpperCase()}`,
+      name:
+        otherUser.name || `Anônimo #${otherUser.id.slice(0, 4).toUpperCase()}`,
       image: otherUser.image,
       lastSeenAt: otherUser.lastSeenAt,
       otherUserId: otherUser.id
     },
     messages: conversation.messages.map((msg) => {
-      const senderId: 'me' | 'other' = msg.senderId === session.user.id ? 'me' : 'other';
+      const senderId: 'me' | 'other' =
+        msg.senderId === session.user.id ? 'me' : 'other';
       return {
         id: msg.id,
         content: msg.content,
@@ -321,11 +344,16 @@ export async function findRandomUser(): Promise<{
   if (onlineUsers.length === 0) {
     // Aplica rate limit apenas quando não encontra usuário
     await setRateLimit(currentUserId, 'random_search');
-    return { success: false, error: 'Nenhum usuário online no momento', retryAfter: RATE_LIMIT_SECONDS };
+    return {
+      success: false,
+      error: 'Nenhum usuário online no momento',
+      retryAfter: RATE_LIMIT_SECONDS
+    };
   }
 
   // Seleciona um usuário aleatório
-  const randomUser = onlineUsers[Math.floor(Math.random() * onlineUsers.length)];
+  const randomUser =
+    onlineUsers[Math.floor(Math.random() * onlineUsers.length)];
 
   // Cria nova conversa
   const newConversation = await prisma.conversation.create({
@@ -336,4 +364,28 @@ export async function findRandomUser(): Promise<{
   });
 
   return { success: true, conversationId: newConversation.id };
+}
+
+export async function markMessagesAsRead(
+  conversationId: string
+): Promise<void> {
+  const session = await auth.api.getSession({
+    headers: {
+      cookie: await getSessionCookie()
+    }
+  });
+
+  if (!session?.user?.id) {
+    throw new Error('Unauthorized');
+  }
+
+  // Marca como lidas apenas mensagens enviadas pelo outro usuário
+  await prisma.message.updateMany({
+    where: {
+      conversationId,
+      senderId: { not: session.user.id },
+      isRead: false
+    },
+    data: { isRead: true }
+  });
 }
