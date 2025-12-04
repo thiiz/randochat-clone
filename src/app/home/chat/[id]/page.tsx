@@ -5,7 +5,6 @@ import { OnlineIndicator } from '@/components/online-indicator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { useRealtimeMessages } from '@/hooks/use-realtime-messages';
 import { useSession } from '@/lib/auth-client';
 import { getConversationMessages, sendMessage } from '@/lib/chat-actions';
@@ -51,7 +50,8 @@ export default function ChatPage() {
   const params = useParams();
   const conversationId = params.id as string;
   const { data: session } = useSession();
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -59,16 +59,21 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
 
-  // Callback para adicionar novas mensagens recebidas em tempo real
-  const handleNewMessage = useCallback((newMessage: Message) => {
-    setMessages((prev) => {
-      // Evita duplicatas
-      if (prev.some((m) => m.id === newMessage.id)) return prev;
-      return [...prev, newMessage];
-    });
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
-  // Hook de realtime - escuta novas mensagens
+  const handleNewMessage = useCallback(
+    (newMessage: Message) => {
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === newMessage.id)) return prev;
+        return [...prev, newMessage];
+      });
+      setTimeout(scrollToBottom, 100);
+    },
+    [scrollToBottom]
+  );
+
   useRealtimeMessages({
     conversationId,
     currentUserId: session?.user?.id || '',
@@ -91,12 +96,9 @@ export default function ChatPage() {
     loadConversation();
   }, [conversationId]);
 
-  // Auto-scroll quando novas mensagens chegam
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages]);
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
 
   const handleSend = async () => {
     if (!message.trim() || !conversation) return;
@@ -107,7 +109,7 @@ export default function ChatPage() {
 
     try {
       const newMessage = await sendMessage(conversationId, messageText);
-      setMessages([...messages, newMessage]);
+      setMessages((prev) => [...prev, newMessage]);
     } catch (error) {
       console.error('Failed to send message:', error);
       setMessage(messageText);
@@ -118,7 +120,7 @@ export default function ChatPage() {
 
   if (loading) {
     return (
-      <div className='flex h-screen items-center justify-center'>
+      <div className='flex h-dvh items-center justify-center'>
         <p className='text-muted-foreground'>Carregando conversa...</p>
       </div>
     );
@@ -126,7 +128,7 @@ export default function ChatPage() {
 
   if (!conversation) {
     return (
-      <div className='flex h-screen items-center justify-center'>
+      <div className='flex h-dvh items-center justify-center'>
         <p className='text-muted-foreground'>Conversa não encontrada</p>
       </div>
     );
@@ -134,20 +136,19 @@ export default function ChatPage() {
 
   return (
     <HeartbeatProvider>
-      <div className='from-theme-gradient-from dark:from-theme-gradient-dark-from dark:to-background flex h-screen flex-col bg-gradient-to-b to-white'>
-        {/* Header */}
-        <div className='flex items-center justify-between border-b px-4 py-3'>
-          <div className='flex items-center gap-3'>
-            <Link href='/home'>
-              <Button variant='ghost' size='icon' className='h-8 w-8'>
-                <ArrowLeft className='h-4 w-4' />
-              </Button>
-            </Link>
-          </div>
+      <div className='from-theme-gradient-from dark:from-theme-gradient-dark-from dark:to-background fixed inset-0 flex flex-col bg-gradient-to-b to-white'>
+        {/* Header - altura fixa */}
+        <header className='bg-background/80 flex shrink-0 items-center justify-between border-b px-3 py-2 backdrop-blur-sm sm:px-4 sm:py-3'>
+          <Link href='/home'>
+            <Button variant='ghost' size='icon' className='h-9 w-9'>
+              <ArrowLeft className='h-5 w-5' />
+            </Button>
+          </Link>
+
           <div className='flex flex-col items-center'>
             <div className='relative'>
-              <Avatar className='border-primary h-10 w-10 border-2'>
-                <AvatarFallback className='bg-theme-accent-light text-theme-accent-text'>
+              <Avatar className='border-primary h-9 w-9 border-2 sm:h-10 sm:w-10'>
+                <AvatarFallback className='bg-theme-accent-light text-theme-accent-text text-xs sm:text-sm'>
                   {getInitials(conversation.name)}
                 </AvatarFallback>
               </Avatar>
@@ -157,44 +158,47 @@ export default function ChatPage() {
                 className='border-background absolute -right-0.5 -bottom-0.5 rounded-full border-2'
               />
             </div>
-            <span className='mt-1 text-sm font-medium'>
+            <span className='mt-1 max-w-[150px] truncate text-sm font-medium sm:max-w-[200px]'>
               {conversation.name}
             </span>
             <OnlineIndicator
               lastSeenAt={conversation.lastSeenAt}
               showText
-              className='mt-0.5'
+              className='mt-0.5 text-xs'
             />
           </div>
-          <Button variant='ghost' size='icon' className='h-8 w-8'>
-            <MoreVertical className='h-4 w-4' />
-          </Button>
-        </div>
 
-        {/* Messages */}
-        <ScrollArea className='flex-1 px-4'>
-          <div className='py-4'>
-            {/* Messages list */}
-            <div className='space-y-4'>
-              {messages.length === 0 ? (
-                <div className='text-muted-foreground py-8 text-center'>
-                  <p>Nenhuma mensagem ainda. Comece a conversa!</p>
-                </div>
-              ) : (
-                messages.map((msg) => (
+          <Button variant='ghost' size='icon' className='h-9 w-9'>
+            <MoreVertical className='h-5 w-5' />
+          </Button>
+        </header>
+
+        {/* Messages - área scrollável */}
+        <div
+          ref={messagesContainerRef}
+          className='flex-1 overflow-y-auto overscroll-contain px-3 sm:px-4'
+        >
+          <div className='mx-auto max-w-3xl py-4'>
+            {messages.length === 0 ? (
+              <div className='text-muted-foreground flex h-full items-center justify-center py-20 text-center'>
+                <p>Nenhuma mensagem ainda. Comece a conversa!</p>
+              </div>
+            ) : (
+              <div className='space-y-3'>
+                {messages.map((msg) => (
                   <div
                     key={msg.id}
                     className={`flex ${msg.senderId === 'me' ? 'justify-end' : 'justify-start'}`}
                   >
                     {msg.senderId !== 'me' && (
-                      <Avatar className='mr-2 h-8 w-8 self-end'>
+                      <Avatar className='mr-2 h-7 w-7 shrink-0 self-end sm:h-8 sm:w-8'>
                         <AvatarFallback className='bg-theme-accent-light text-theme-accent-text text-xs'>
                           {getInitials(conversation.name)}
                         </AvatarFallback>
                       </Avatar>
                     )}
                     <div
-                      className={`max-w-[75%] rounded-2xl px-4 py-2 ${
+                      className={`max-w-[80%] rounded-2xl px-3 py-2 sm:max-w-[70%] sm:px-4 ${
                         msg.senderId === 'me'
                           ? 'bg-primary text-primary-foreground'
                           : 'bg-muted'
@@ -207,62 +211,70 @@ export default function ChatPage() {
                           className='mb-2 max-w-full rounded'
                         />
                       )}
-                      {msg.content && <p className='text-sm'>{msg.content}</p>}
+                      {msg.content && (
+                        <p className='text-sm break-words'>{msg.content}</p>
+                      )}
                     </div>
                   </div>
-                ))
-              )}
-              {/* Elemento para auto-scroll */}
-              <div ref={scrollRef} />
-            </div>
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
+            )}
           </div>
-        </ScrollArea>
+        </div>
 
-        {/* Input */}
-        <div className='border-t px-4 py-3'>
-          <div className='flex items-center gap-2'>
+        {/* Input - altura fixa */}
+        <footer className='bg-background/80 shrink-0 border-t px-3 py-2 backdrop-blur-sm sm:px-4 sm:py-3'>
+          <div className='mx-auto flex max-w-3xl items-center gap-1 sm:gap-2'>
             <Input
               placeholder='Digite uma mensagem'
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && !sending && handleSend()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey && !sending) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
               disabled={sending}
-              className='flex-1'
+              className='min-w-0 flex-1'
             />
+            <div className='hidden gap-1 sm:flex'>
+              <Button
+                variant='ghost'
+                size='icon'
+                className='h-9 w-9'
+                disabled={sending}
+              >
+                <Smile className='text-primary h-5 w-5' />
+              </Button>
+              <Button
+                variant='ghost'
+                size='icon'
+                className='h-9 w-9'
+                disabled={sending}
+              >
+                <Paperclip className='text-primary h-5 w-5' />
+              </Button>
+              <Button
+                variant='ghost'
+                size='icon'
+                className='h-9 w-9'
+                disabled={sending}
+              >
+                <Camera className='text-primary h-5 w-5' />
+              </Button>
+            </div>
             <Button
-              variant='ghost'
               size='icon'
-              className='h-9 w-9'
-              disabled={sending}
-            >
-              <Smile className='text-primary h-5 w-5' />
-            </Button>
-            <Button
-              variant='ghost'
-              size='icon'
-              className='h-9 w-9'
-              disabled={sending}
-            >
-              <Paperclip className='text-primary h-5 w-5' />
-            </Button>
-            <Button
-              variant='ghost'
-              size='icon'
-              className='h-9 w-9'
-              disabled={sending}
-            >
-              <Camera className='text-primary h-5 w-5' />
-            </Button>
-            <Button
-              size='icon'
-              className='bg-primary hover:bg-primary/90 h-9 w-9 rounded-full disabled:opacity-50'
+              className='bg-primary hover:bg-primary/90 h-9 w-9 shrink-0 rounded-full disabled:opacity-50'
               onClick={handleSend}
               disabled={sending || !message.trim()}
             >
               <Send className='h-4 w-4' />
             </Button>
           </div>
-        </div>
+        </footer>
       </div>
     </HeartbeatProvider>
   );
