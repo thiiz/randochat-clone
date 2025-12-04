@@ -31,7 +31,8 @@ export default function ProfilePage() {
   const [isPending, startTransition] = useTransition();
   const [name, setName] = useState('');
   const [imageUrl, setImageUrl] = useState('');
-  const [isUploading, setIsUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [initialized, setInitialized] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -42,7 +43,7 @@ export default function ProfilePage() {
     setInitialized(true);
   }
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -51,52 +52,62 @@ export default function ProfilePage() {
       return;
     }
 
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error('A imagem deve ter no máximo 2MB');
+    if (file.size > 1 * 1024 * 1024) {
+      toast.error('A imagem deve ter no máximo 1MB');
       return;
     }
 
-    setIsUploading(true);
-
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const result = await uploadAvatar(formData);
-
-      if (result.error) {
-        toast.error(result.error);
-        return;
-      }
-
-      if (result.url) {
-        setImageUrl(result.url);
-        toast.success('Imagem carregada com sucesso');
-      }
-    } catch {
-      toast.error('Erro ao fazer upload da imagem');
-    } finally {
-      setIsUploading(false);
-    }
+    // Cria preview local
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewUrl(objectUrl);
+    setSelectedFile(file);
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData();
-    formData.set('name', name);
-    formData.set('image', imageUrl);
 
     startTransition(async () => {
+      let finalImageUrl = imageUrl;
+
+      // Se tem arquivo selecionado, faz upload primeiro
+      if (selectedFile) {
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', selectedFile);
+
+        const uploadResult = await uploadAvatar(uploadFormData);
+
+        if (uploadResult.error) {
+          toast.error(uploadResult.error);
+          return;
+        }
+
+        if (uploadResult.url) {
+          finalImageUrl = uploadResult.url;
+        }
+      }
+
+      // Atualiza o perfil
+      const formData = new FormData();
+      formData.set('name', name);
+      formData.set('image', finalImageUrl);
+
       const result = await updateProfile(formData);
       if (result.error) {
         toast.error(result.error);
       } else {
+        // Limpa o arquivo selecionado e atualiza a URL
+        setSelectedFile(null);
+        setPreviewUrl('');
+        setImageUrl(finalImageUrl);
         // Força refresh da sessão para atualizar os dados em todos os componentes
         await authClient.getSession({ fetchOptions: { cache: 'no-store' } });
         toast.success('Perfil atualizado com sucesso!');
       }
     });
   };
+
+  // URL para exibir no avatar (preview local ou URL salva)
+  const displayImageUrl = previewUrl || imageUrl;
 
   if (isSessionLoading) {
     return (
@@ -123,7 +134,7 @@ export default function ProfilePage() {
                 <div className='flex flex-col items-center gap-4'>
                   <div className='relative'>
                     <Avatar className='h-24 w-24'>
-                      <AvatarImage src={imageUrl || undefined} />
+                      <AvatarImage src={displayImageUrl || undefined} />
                       <AvatarFallback className='bg-theme-accent-light text-theme-accent-text text-2xl'>
                         {getInitials(name || 'U')}
                       </AvatarFallback>
@@ -131,21 +142,17 @@ export default function ProfilePage() {
                     <button
                       type='button'
                       onClick={() => fileInputRef.current?.click()}
-                      disabled={isUploading}
+                      disabled={isPending}
                       className='bg-primary text-primary-foreground hover:bg-primary/90 absolute -right-1 -bottom-1 rounded-full p-2 shadow-md transition-colors disabled:opacity-50'
                     >
-                      {isUploading ? (
-                        <Loader2 className='h-4 w-4 animate-spin' />
-                      ) : (
-                        <Camera className='h-4 w-4' />
-                      )}
+                      <Camera className='h-4 w-4' />
                     </button>
                   </div>
                   <input
                     ref={fileInputRef}
                     type='file'
                     accept='image/*'
-                    onChange={handleImageUpload}
+                    onChange={handleImageSelect}
                     className='hidden'
                   />
                   <p className='text-muted-foreground text-sm'>

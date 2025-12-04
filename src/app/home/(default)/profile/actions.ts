@@ -29,8 +29,8 @@ export async function uploadAvatar(formData: FormData) {
     return { error: 'Por favor, selecione uma imagem' };
   }
 
-  if (file.size > 2 * 1024 * 1024) {
-    return { error: 'A imagem deve ter no máximo 2MB' };
+  if (file.size > 1 * 1024 * 1024) {
+    return { error: 'A imagem deve ter no máximo 1MB' };
   }
 
   try {
