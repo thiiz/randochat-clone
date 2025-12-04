@@ -22,7 +22,13 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState
+} from 'react';
 
 function getInitials(name: string) {
   return name
@@ -63,8 +69,10 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
 
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToBottom = useCallback((instant = false) => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: instant ? 'instant' : 'smooth'
+    });
   }, []);
 
   const handleNewMessage = useCallback(
@@ -89,6 +97,8 @@ export default function ChatPage() {
     onNewMessage: handleNewMessage
   });
 
+  const initialScrollDone = useRef(false);
+
   useEffect(() => {
     const loadConversation = async () => {
       try {
@@ -108,9 +118,23 @@ export default function ChatPage() {
     loadConversation();
   }, [conversationId]);
 
+  // Scroll instantâneo no carregamento inicial (após loading = false)
+  useLayoutEffect(() => {
+    if (loading || messages.length === 0 || initialScrollDone.current) return;
+
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+      initialScrollDone.current = true;
+    }
+  }, [loading, messages]);
+
+  // Scroll suave para novas mensagens após o carregamento inicial
   useEffect(() => {
+    if (loading || messages.length === 0 || !initialScrollDone.current) return;
+
     scrollToBottom();
-  }, [messages, scrollToBottom]);
+  }, [loading, messages, scrollToBottom]);
 
   const handleSend = async () => {
     if (!message.trim() || !conversation) return;
