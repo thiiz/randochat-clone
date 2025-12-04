@@ -2,7 +2,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export type Conversation = {
   id: string;
@@ -23,6 +23,15 @@ export function useRealtimeConversations(initialConversations: Conversation[]) {
   useEffect(() => {
     setConversations(initialConversations);
   }, [initialConversations]);
+
+  // Limpa o unreadCount localmente de forma imediata
+  const clearUnreadCount = useCallback((conversationId: string) => {
+    setConversations((prev) =>
+      prev.map((conv) =>
+        conv.id === conversationId ? { ...conv, unreadCount: 0 } : conv
+      )
+    );
+  }, []);
 
   useEffect(() => {
     const channel = supabase
@@ -80,5 +89,5 @@ export function useRealtimeConversations(initialConversations: Conversation[]) {
     };
   }, [router]);
 
-  return conversations;
+  return { conversations, clearUnreadCount };
 }

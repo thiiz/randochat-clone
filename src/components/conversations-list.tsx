@@ -7,6 +7,7 @@ import {
   useRealtimeConversations,
   type Conversation
 } from '@/hooks/use-realtime-conversations';
+import { markMessagesAsRead } from '@/lib/chat-actions';
 import Link from 'next/link';
 
 function getInitials(name: string) {
@@ -43,7 +44,15 @@ interface ConversationsListProps {
 export function ConversationsList({
   initialConversations
 }: ConversationsListProps) {
-  const conversations = useRealtimeConversations(initialConversations);
+  const { conversations, clearUnreadCount } =
+    useRealtimeConversations(initialConversations);
+
+  const handleConversationClick = (conversationId: string) => {
+    // Limpa o contador localmente de forma imediata (UX instantânea)
+    clearUnreadCount(conversationId);
+    // Marca como lido no servidor em background
+    markMessagesAsRead(conversationId);
+  };
 
   if (conversations.length === 0) {
     return (
@@ -59,6 +68,7 @@ export function ConversationsList({
         <Link
           key={conv.id}
           href={`/home/chat/${conv.id}`}
+          onClick={() => handleConversationClick(conv.id)}
           className='hover:bg-muted/50 flex items-start gap-3 rounded-lg p-3 transition-colors'
         >
           <div className='relative'>
