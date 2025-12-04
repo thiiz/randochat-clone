@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { authClient, useSession } from '@/lib/auth-client';
+import { useSession } from '@/lib/auth-client';
 import { Camera, Loader2 } from 'lucide-react';
 import { useRef, useState, useTransition } from 'react';
 import { toast } from 'sonner';
@@ -27,7 +27,7 @@ function getInitials(name: string) {
 }
 
 export default function ProfilePage() {
-  const { data: session, isPending: isSessionLoading } = useSession();
+  const { data: session, isPending: isSessionLoading, refetch } = useSession();
   const [isPending, startTransition] = useTransition();
   const [name, setName] = useState('');
   const [imageUrl, setImageUrl] = useState('');
@@ -99,8 +99,8 @@ export default function ProfilePage() {
         setSelectedFile(null);
         setPreviewUrl('');
         setImageUrl(finalImageUrl);
-        // Força refresh da sessão para atualizar os dados em todos os componentes
-        await authClient.getSession({ fetchOptions: { cache: 'no-store' } });
+        // Força refresh da sessão para atualizar os dados em todos os componentes (incluindo o header)
+        await refetch();
         toast.success('Perfil atualizado com sucesso!');
       }
     });
