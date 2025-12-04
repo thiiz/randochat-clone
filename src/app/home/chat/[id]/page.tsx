@@ -2,7 +2,7 @@
 
 import { HeartbeatProvider } from '@/components/heartbeat-provider';
 import { OnlineIndicator } from '@/components/online-indicator';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useRealtimeMessages } from '@/hooks/use-realtime-messages';
@@ -184,6 +184,7 @@ export default function ChatPage() {
           <div className='flex flex-col items-center'>
             <div className='relative'>
               <Avatar className='border-primary h-9 w-9 border-2 sm:h-10 sm:w-10'>
+                <AvatarImage src={conversation.image || undefined} />
                 <AvatarFallback className='bg-theme-accent-light text-theme-accent-text text-xs sm:text-sm'>
                   {getInitials(conversation.name)}
                 </AvatarFallback>
@@ -228,6 +229,7 @@ export default function ChatPage() {
                   >
                     {msg.senderId !== 'me' && (
                       <Avatar className='mr-2 h-7 w-7 shrink-0 self-end sm:h-8 sm:w-8'>
+                        <AvatarImage src={conversation.image || undefined} />
                         <AvatarFallback className='bg-theme-accent-light text-theme-accent-text text-xs'>
                           {getInitials(conversation.name)}
                         </AvatarFallback>
