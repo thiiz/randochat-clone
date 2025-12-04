@@ -57,7 +57,7 @@ export function UserMenu({ user }: UserMenuProps) {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem disabled>
+        <DropdownMenuItem onClick={() => router.push('/home/profile')}>
           <IconUser className='mr-2 h-4 w-4' />
           <span>Perfil</span>
         </DropdownMenuItem>
