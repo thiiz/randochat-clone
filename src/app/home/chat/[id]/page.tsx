@@ -221,40 +221,53 @@ export default function ChatPage() {
                 <p>Nenhuma mensagem ainda. Comece a conversa!</p>
               </div>
             ) : (
-              <div className='space-y-3'>
-                {messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex ${msg.senderId === 'me' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    {msg.senderId !== 'me' && (
-                      <Avatar className='mr-2 h-7 w-7 shrink-0 self-end sm:h-8 sm:w-8'>
-                        <AvatarImage src={conversation.image || undefined} />
-                        <AvatarFallback className='bg-theme-accent-light text-theme-accent-text text-xs'>
-                          {getInitials(conversation.name)}
-                        </AvatarFallback>
-                      </Avatar>
-                    )}
+              <div className='space-y-1'>
+                {messages.map((msg, index) => {
+                  const prevMsg = messages[index - 1];
+                  const showAvatar =
+                    msg.senderId !== 'me' &&
+                    (!prevMsg || prevMsg.senderId !== msg.senderId);
+
+                  return (
                     <div
-                      className={`max-w-[80%] rounded-2xl px-3 py-2 sm:max-w-[70%] sm:px-4 ${
-                        msg.senderId === 'me'
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted'
-                      }`}
+                      key={msg.id}
+                      className={`flex ${msg.senderId === 'me' ? 'justify-end' : 'justify-start'}`}
                     >
-                      {msg.imageUrl && (
-                        <img
-                          src={msg.imageUrl}
-                          alt='Message image'
-                          className='mb-2 max-w-full rounded'
-                        />
+                      {msg.senderId !== 'me' && (
+                        <div className='mr-2 h-7 w-7 shrink-0 self-end sm:h-8 sm:w-8'>
+                          {showAvatar && (
+                            <Avatar className='h-7 w-7 sm:h-8 sm:w-8'>
+                              <AvatarImage
+                                src={conversation.image || undefined}
+                              />
+                              <AvatarFallback className='bg-theme-accent-light text-theme-accent-text text-xs'>
+                                {getInitials(conversation.name)}
+                              </AvatarFallback>
+                            </Avatar>
+                          )}
+                        </div>
                       )}
-                      {msg.content && (
-                        <p className='text-sm break-words'>{msg.content}</p>
-                      )}
+                      <div
+                        className={`max-w-[80%] rounded-2xl px-3 py-2 sm:max-w-[70%] sm:px-4 ${
+                          msg.senderId === 'me'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted'
+                        }`}
+                      >
+                        {msg.imageUrl && (
+                          <img
+                            src={msg.imageUrl}
+                            alt='Message image'
+                            className='mb-2 max-w-full rounded'
+                          />
+                        )}
+                        {msg.content && (
+                          <p className='text-sm break-words'>{msg.content}</p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 <div ref={messagesEndRef} />
               </div>
             )}
