@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useRealtimeMessages } from '@/hooks/use-realtime-messages';
+import { useIsDesktop } from '@/hooks/use-media-query';
 import { useSession } from '@/lib/auth-client';
 import {
   getConversationMessages,
@@ -60,6 +61,7 @@ export default function ChatPage() {
   const params = useParams();
   const conversationId = params.id as string;
   const { data: session } = useSession();
+  const isDesktop = useIsDesktop();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -172,14 +174,20 @@ export default function ChatPage() {
 
   return (
     <HeartbeatProvider>
-      <div className='from-theme-gradient-from dark:from-theme-gradient-dark-from dark:to-background fixed inset-0 flex flex-col bg-gradient-to-b to-white'>
+      <div
+        className={`from-theme-gradient-from dark:from-theme-gradient-dark-from dark:to-background flex flex-col bg-gradient-to-b to-white ${isDesktop ? 'h-full' : 'fixed inset-0'}`}
+      >
         {/* Header - altura fixa */}
         <header className='bg-background/80 flex shrink-0 items-center justify-between border-b px-3 py-2 backdrop-blur-sm sm:px-4 sm:py-3'>
-          <Link href='/home'>
-            <Button variant='ghost' size='icon' className='h-9 w-9'>
-              <ArrowLeft className='h-5 w-5' />
-            </Button>
-          </Link>
+          {!isDesktop ? (
+            <Link href='/home'>
+              <Button variant='ghost' size='icon' className='h-9 w-9'>
+                <ArrowLeft className='h-5 w-5' />
+              </Button>
+            </Link>
+          ) : (
+            <div className='w-9' /> /* Spacer to maintain header layout */
+          )}
 
           <div className='flex flex-col items-center'>
             <div className='relative'>

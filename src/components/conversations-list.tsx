@@ -39,10 +39,12 @@ function formatTime(date: Date): string {
 
 interface ConversationsListProps {
   initialConversations: Conversation[];
+  activeConversationId?: string | null;
 }
 
 export function ConversationsList({
-  initialConversations
+  initialConversations,
+  activeConversationId
 }: ConversationsListProps) {
   const { conversations, clearUnreadCount } =
     useRealtimeConversations(initialConversations);
@@ -69,7 +71,9 @@ export function ConversationsList({
           key={conv.id}
           href={`/home/chat/${conv.id}`}
           onClick={() => handleConversationClick(conv.id)}
-          className='hover:bg-muted/50 flex items-start gap-3 rounded-lg p-3 transition-colors'
+          className={`flex items-start gap-3 rounded-lg p-3 transition-colors ${
+            activeConversationId === conv.id ? 'bg-muted' : 'hover:bg-muted/50'
+          }`}
         >
           <div className='relative'>
             <Avatar className='h-12 w-12'>
