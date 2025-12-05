@@ -24,7 +24,7 @@ export function MobileLayoutWrapper({ children }: MobileLayoutWrapperProps) {
       <div className='flex items-center justify-between border-b px-4 py-3'>
         <div className='flex items-center gap-3'>
           {session?.user && <UserMenu user={session.user} />}
-          <h1 className='text-lg font-semibold'>Minhas conversas</h1>
+          <h1 className='text-lg font-semibold'>Conversas</h1>
         </div>
       </div>
       {children}
