@@ -13,6 +13,6 @@ export default defineConfig({
   // The database URL
   datasource: {
     // Type Safe env() helper
-    url: env('DATABASE_URL')
+    url: env('DIRECT_URL')
   }
 });

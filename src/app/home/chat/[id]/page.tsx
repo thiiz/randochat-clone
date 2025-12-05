@@ -1,10 +1,12 @@
 'use client';
 
 import { OnlineIndicator } from '@/components/online-indicator';
+import { TypingIndicator } from '@/components/typing-indicator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useRealtimeMessages } from '@/hooks/use-realtime-messages';
+import { useTypingIndicator } from '@/hooks/use-typing-indicator';
 import { useIsDesktop } from '@/hooks/use-media-query';
 import { useSession } from '@/lib/auth-client';
 import {
@@ -96,6 +98,11 @@ export default function ChatPage() {
     conversationId,
     currentUserId: session?.user?.id || '',
     onNewMessage: handleNewMessage
+  });
+
+  const { isOtherTyping, sendTypingEvent, stopTyping } = useTypingIndicator({
+    conversationId,
+    currentUserId: session?.user?.id || ''
   });
 
   const initialScrollDone = useRef(false);
@@ -276,6 +283,20 @@ export default function ChatPage() {
                   </div>
                 );
               })}
+              {/* Typing Indicator */}
+              {isOtherTyping && (
+                <div className='flex justify-start'>
+                  <div className='mr-2 h-7 w-7 shrink-0 self-end sm:h-8 sm:w-8'>
+                    <Avatar className='h-7 w-7 sm:h-8 sm:w-8'>
+                      <AvatarImage src={conversation.image || undefined} />
+                      <AvatarFallback className='bg-theme-accent-light text-theme-accent-text text-xs'>
+                        {getInitials(conversation.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                  <TypingIndicator />
+                </div>
+              )}
               <div ref={messagesEndRef} />
             </div>
           )}
@@ -288,13 +309,22 @@ export default function ChatPage() {
           <Input
             placeholder='Digite uma mensagem'
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={(e) => {
+              setMessage(e.target.value);
+              if (e.target.value.trim()) {
+                sendTypingEvent();
+              } else {
+                stopTyping();
+              }
+            }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey && !sending) {
                 e.preventDefault();
+                stopTyping();
                 handleSend();
               }
             }}
+            onBlur={stopTyping}
             disabled={sending}
             className='min-w-0 flex-1'
           />
