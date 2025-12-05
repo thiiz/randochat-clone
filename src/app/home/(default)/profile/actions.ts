@@ -29,6 +29,7 @@ export async function uploadAvatar(formData: FormData) {
     return { error: 'Por favor, selecione uma imagem' };
   }
 
+  // A imagem já vem comprimida do cliente, mas verificamos por segurança
   if (file.size > 1 * 1024 * 1024) {
     return { error: 'A imagem deve ter no máximo 1MB' };
   }
@@ -46,7 +47,8 @@ export async function uploadAvatar(formData: FormData) {
       await supabaseAdmin.storage.from('avatars').remove(filesToDelete);
     }
 
-    const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+    // Usa a extensão do arquivo comprimido (webp ou jpg)
+    const fileExt = file.name.split('.').pop()?.toLowerCase() || 'webp';
     const fileName = `${session.user.id}/${Date.now()}.${fileExt}`;
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
@@ -67,7 +69,8 @@ export async function uploadAvatar(formData: FormData) {
       .from('avatars')
       .getPublicUrl(fileName);
 
-    return { url: data.publicUrl };
+    // Adiciona timestamp para evitar cache do navegador
+    return { url: `${data.publicUrl}?t=${Date.now()}` };
   } catch (err) {
     console.error('Upload error:', err);
     return { error: 'Erro ao fazer upload da imagem' };

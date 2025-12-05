@@ -43,7 +43,7 @@ export default function ProfilePage() {
     setInitialized(true);
   }
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -52,15 +52,29 @@ export default function ProfilePage() {
       return;
     }
 
-    if (file.size > 1 * 1024 * 1024) {
-      toast.error('A imagem deve ter no máximo 1MB');
+    // Limite generoso no cliente - a compressão reduz drasticamente
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error('A imagem deve ter no máximo 20MB');
       return;
     }
 
-    // Cria preview local
-    const objectUrl = URL.createObjectURL(file);
-    setPreviewUrl(objectUrl);
-    setSelectedFile(file);
+    try {
+      // Comprime a imagem no cliente (500x500, WebP, 80% qualidade)
+      const { compressImage } = await import('@/lib/image-utils');
+      const compressedFile = await compressImage(file, 500, 0.8);
+
+      // Cria preview local
+      const objectUrl = URL.createObjectURL(compressedFile);
+      setPreviewUrl(objectUrl);
+      setSelectedFile(compressedFile);
+
+      // Log para debug (pode remover depois)
+      console.log(
+        `Imagem comprimida: ${(file.size / 1024).toFixed(1)}KB → ${(compressedFile.size / 1024).toFixed(1)}KB`
+      );
+    } catch {
+      toast.error('Erro ao processar a imagem. Tente outra.');
+    }
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
