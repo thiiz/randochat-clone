@@ -286,7 +286,7 @@ export async function sendMessage(
   };
 }
 
-export async function findRandomUser(): Promise<{
+export async function findRandomUser(onlineUserIds: string[]): Promise<{
   success: boolean;
   conversationId?: string;
   error?: string;
@@ -314,35 +314,13 @@ export async function findRandomUser(): Promise<{
     };
   }
 
-  // Busca IDs de usuários que já têm conversa com o usuário atual
-  const existingConversations = await prisma.conversation.findMany({
-    where: {
-      OR: [{ user1Id: currentUserId }, { user2Id: currentUserId }]
-    },
-    select: { user1Id: true, user2Id: true }
-  });
-
-  const usersWithConversation = existingConversations.map((conv) =>
-    conv.user1Id === currentUserId ? conv.user2Id : conv.user1Id
+  // Filtra o próprio usuário da lista de online
+  const availableOnlineUsers = onlineUserIds.filter(
+    (id) => id !== currentUserId
   );
 
-  // Considera "online" quem foi visto nos últimos 5 minutos
-  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-
-  // Busca usuários online (exceto o atual e quem já tem conversa)
-  const onlineUsers = await prisma.user.findMany({
-    where: {
-      id: {
-        not: currentUserId,
-        notIn: usersWithConversation
-      },
-      lastSeenAt: { gte: fiveMinutesAgo }
-    },
-    select: { id: true }
-  });
-
-  if (onlineUsers.length === 0) {
-    // Aplica rate limit apenas quando não encontra usuário
+  if (availableOnlineUsers.length === 0) {
+    // Aplica rate limit quando não há usuários online
     await setRateLimit(currentUserId, 'random_search');
     return {
       success: false,
@@ -351,15 +329,44 @@ export async function findRandomUser(): Promise<{
     };
   }
 
+  // Busca IDs de usuários que já têm conversa com o usuário atual
+  const existingConversations = await prisma.conversation.findMany({
+    where: {
+      OR: [{ user1Id: currentUserId }, { user2Id: currentUserId }]
+    },
+    select: { user1Id: true, user2Id: true }
+  });
+
+  const usersWithConversation = new Set(
+    existingConversations.map((conv) =>
+      conv.user1Id === currentUserId ? conv.user2Id : conv.user1Id
+    )
+  );
+
+  // Filtra usuários online que NÃO têm conversa ainda
+  const eligibleUsers = availableOnlineUsers.filter(
+    (id) => !usersWithConversation.has(id)
+  );
+
+  if (eligibleUsers.length === 0) {
+    // Aplica rate limit quando não encontra usuário elegível
+    await setRateLimit(currentUserId, 'random_search');
+    return {
+      success: false,
+      error: 'Nenhum usuário disponível no momento',
+      retryAfter: RATE_LIMIT_SECONDS
+    };
+  }
+
   // Seleciona um usuário aleatório
-  const randomUser =
-    onlineUsers[Math.floor(Math.random() * onlineUsers.length)];
+  const randomUserId =
+    eligibleUsers[Math.floor(Math.random() * eligibleUsers.length)];
 
   // Cria nova conversa
   const newConversation = await prisma.conversation.create({
     data: {
       user1Id: currentUserId,
-      user2Id: randomUser.id
+      user2Id: randomUserId
     }
   });
 

@@ -2,7 +2,6 @@
 
 import { Sidebar } from './sidebar';
 import { EmptyChatState } from '@/components/chat/empty-chat-state';
-import { HeartbeatProvider } from '@/components/heartbeat-provider';
 import type { Conversation } from '@/hooks/use-realtime-conversations';
 import type { User } from '@/lib/auth';
 import {
@@ -35,35 +34,33 @@ export function DesktopLayout({
   hasActiveChat = false
 }: DesktopLayoutProps) {
   return (
-    <HeartbeatProvider>
-      <div className='from-theme-gradient-from dark:from-theme-gradient-dark-from dark:to-background flex h-screen bg-gradient-to-b to-white'>
-        <ResizablePanelGroup direction='horizontal' className='h-full'>
-          {/* Sidebar */}
-          <ResizablePanel
-            defaultSize={30}
-            minSize={20}
-            maxSize={40}
-            className='min-w-[280px]'
-          >
-            <Sidebar
-              user={user}
-              conversations={conversations}
-              favorites={favorites}
-            />
-          </ResizablePanel>
+    <div className='from-theme-gradient-from dark:from-theme-gradient-dark-from dark:to-background flex h-screen bg-gradient-to-b to-white'>
+      <ResizablePanelGroup direction='horizontal' className='h-full'>
+        {/* Sidebar */}
+        <ResizablePanel
+          defaultSize={30}
+          minSize={20}
+          maxSize={40}
+          className='min-w-[280px]'
+        >
+          <Sidebar
+            user={user}
+            conversations={conversations}
+            favorites={favorites}
+          />
+        </ResizablePanel>
 
-          <ResizableHandle withHandle />
+        <ResizableHandle withHandle />
 
-          {/* Main Content */}
-          <ResizablePanel defaultSize={70} minSize={50}>
-            {hasActiveChat ? (
-              <div className='h-full'>{children}</div>
-            ) : (
-              <EmptyChatState />
-            )}
-          </ResizablePanel>
-        </ResizablePanelGroup>
-      </div>
-    </HeartbeatProvider>
+        {/* Main Content */}
+        <ResizablePanel defaultSize={70} minSize={50}>
+          {hasActiveChat ? (
+            <div className='h-full'>{children}</div>
+          ) : (
+            <EmptyChatState />
+          )}
+        </ResizablePanel>
+      </ResizablePanelGroup>
+    </div>
   );
 }

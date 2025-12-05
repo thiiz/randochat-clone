@@ -1,5 +1,4 @@
 import { MobileLayoutWrapper } from '@/components/layout/mobile-layout-wrapper';
-import { HeartbeatProvider } from '@/components/heartbeat-provider';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -12,9 +11,5 @@ export default async function DefaultLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <HeartbeatProvider>
-      <MobileLayoutWrapper>{children}</MobileLayoutWrapper>
-    </HeartbeatProvider>
-  );
+  return <MobileLayoutWrapper>{children}</MobileLayoutWrapper>;
 }

@@ -13,13 +13,14 @@ import { useSession } from '@/lib/auth-client';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
 interface PresenceState {
-  odBiGK: string;
+  userId: string;
   online_at: string;
 }
 
 interface PresenceContextType {
   onlineUsers: Set<string>;
-  isUserOnline: (odBiGK: string) => boolean;
+  isUserOnline: (userId: string) => boolean;
+  getOnlineUserIds: () => string[];
 }
 
 const PresenceContext = createContext<PresenceContextType | null>(null);
@@ -76,7 +77,7 @@ export function PresenceProvider({ children }: { children: React.ReactNode }) {
         if (status === 'SUBSCRIBED') {
           // Registra a presença do usuário atual
           await channel.track({
-            odBiGK: currentUserId,
+            userId: currentUserId,
             online_at: new Date().toISOString()
           });
         }
@@ -92,14 +93,20 @@ export function PresenceProvider({ children }: { children: React.ReactNode }) {
   }, [currentUserId]);
 
   const isUserOnline = useCallback(
-    (odBiGK: string) => {
-      return onlineUsers.has(odBiGK);
+    (userId: string) => {
+      return onlineUsers.has(userId);
     },
     [onlineUsers]
   );
 
+  const getOnlineUserIds = useCallback(() => {
+    return Array.from(onlineUsers);
+  }, [onlineUsers]);
+
   return (
-    <PresenceContext.Provider value={{ onlineUsers, isUserOnline }}>
+    <PresenceContext.Provider
+      value={{ onlineUsers, isUserOnline, getOnlineUserIds }}
+    >
       {children}
     </PresenceContext.Provider>
   );

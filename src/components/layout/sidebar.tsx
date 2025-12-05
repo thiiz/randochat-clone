@@ -6,6 +6,7 @@ import { OnlineIndicator } from '@/components/online-indicator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { usePresence } from '@/contexts/presence-context';
 import { findRandomUser } from '@/lib/chat-actions';
 import type { Conversation } from '@/hooks/use-realtime-conversations';
 import type { User } from '@/lib/auth';
@@ -42,6 +43,7 @@ function getInitials(name: string) {
 export function Sidebar({ user, conversations, favorites }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { getOnlineUserIds } = usePresence();
   const [isSearching, setIsSearching] = useState(false);
   const [cooldown, setCooldown] = useState(0);
 
@@ -65,7 +67,9 @@ export function Sidebar({ user, conversations, favorites }: SidebarProps) {
 
     setIsSearching(true);
     try {
-      const result = await findRandomUser();
+      // Obtém IDs de usuários online da presença em tempo real
+      const onlineUserIds = getOnlineUserIds();
+      const result = await findRandomUser(onlineUserIds);
 
       if (result.success && result.conversationId) {
         router.push(`/home/chat/${result.conversationId}`);
@@ -80,7 +84,7 @@ export function Sidebar({ user, conversations, favorites }: SidebarProps) {
     } finally {
       setIsSearching(false);
     }
-  }, [isSearching, cooldown, router]);
+  }, [isSearching, cooldown, router, getOnlineUserIds]);
 
   const isDisabled = isSearching || cooldown > 0;
 

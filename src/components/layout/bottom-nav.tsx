@@ -1,16 +1,23 @@
 'use client';
 
-import { HomeIcon, MessageCircleIcon, SettingsIcon, Loader2Icon } from 'lucide-react';
+import {
+  HomeIcon,
+  MessageCircleIcon,
+  SettingsIcon,
+  Loader2Icon
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect, useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import { usePresence } from '@/contexts/presence-context';
 import { findRandomUser } from '@/lib/chat-actions';
 import { toast } from 'sonner';
 
 export function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
+  const { getOnlineUserIds } = usePresence();
   const [isSearching, setIsSearching] = useState(false);
   const [cooldown, setCooldown] = useState(0);
 
@@ -36,7 +43,9 @@ export function BottomNav() {
 
     setIsSearching(true);
     try {
-      const result = await findRandomUser();
+      // Obtém IDs de usuários online da presença em tempo real
+      const onlineUserIds = getOnlineUserIds();
+      const result = await findRandomUser(onlineUserIds);
 
       if (result.success && result.conversationId) {
         router.push(`/home/chat/${result.conversationId}`);
@@ -51,18 +60,18 @@ export function BottomNav() {
     } finally {
       setIsSearching(false);
     }
-  }, [isSearching, cooldown, router]);
+  }, [isSearching, cooldown, router, getOnlineUserIds]);
 
   const isDisabled = isSearching || cooldown > 0;
 
   return (
-    <div className='relative border-t bg-white dark:bg-background'>
+    <div className='dark:bg-background relative border-t bg-white'>
       {/* FAB Button - Floating */}
-      <div className='absolute left-1/2 -translate-x-1/2 -top-7'>
+      <div className='absolute -top-7 left-1/2 -translate-x-1/2'>
         <button
           onClick={handleRandomConnect}
           disabled={isDisabled}
-          className='flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg hover:bg-primary/90 transition-colors disabled:opacity-70'
+          className='bg-primary hover:bg-primary/90 flex h-14 w-14 items-center justify-center rounded-full text-white shadow-lg transition-colors disabled:opacity-70'
         >
           {isSearching ? (
             <Loader2Icon className='h-6 w-6 animate-spin' />
@@ -75,11 +84,8 @@ export function BottomNav() {
       </div>
 
       {/* Bottom Nav */}
-      <div className='flex items-center justify-around px-8 pb-2 pt-4'>
-        <Link
-          href='/home'
-          className='flex flex-col items-center gap-1'
-        >
+      <div className='flex items-center justify-around px-8 pt-4 pb-2'>
+        <Link href='/home' className='flex flex-col items-center gap-1'>
           <HomeIcon
             className={cn(
               'h-6 w-6 transition-colors',
@@ -104,7 +110,9 @@ export function BottomNav() {
           <SettingsIcon
             className={cn(
               'h-6 w-6 transition-colors',
-              isActive('/home/settings') ? 'text-primary' : 'text-muted-foreground'
+              isActive('/home/settings')
+                ? 'text-primary'
+                : 'text-muted-foreground'
             )}
           />
           <div
