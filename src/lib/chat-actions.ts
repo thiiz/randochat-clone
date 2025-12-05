@@ -56,7 +56,11 @@ export async function getConversations() {
 
   const conversations = await prisma.conversation.findMany({
     where: {
-      OR: [{ user1Id: session.user.id }, { user2Id: session.user.id }]
+      OR: [{ user1Id: session.user.id }, { user2Id: session.user.id }],
+      // Só mostrar conversas que têm pelo menos uma mensagem
+      messages: {
+        some: {}
+      }
     },
     include: {
       user1: true,
@@ -329,23 +333,25 @@ export async function findRandomUser(onlineUserIds: string[]): Promise<{
     };
   }
 
-  // Busca IDs de usuários que já têm conversa com o usuário atual
-  const existingConversations = await prisma.conversation.findMany({
+  // Busca conversas existentes COM mensagens (são as que realmente "contam")
+  const conversationsWithMessages = await prisma.conversation.findMany({
     where: {
-      OR: [{ user1Id: currentUserId }, { user2Id: currentUserId }]
+      OR: [{ user1Id: currentUserId }, { user2Id: currentUserId }],
+      messages: { some: {} }
     },
     select: { user1Id: true, user2Id: true }
   });
 
-  const usersWithConversation = new Set(
-    existingConversations.map((conv) =>
+  // Usuários que já têm conversa COM mensagens não podem ser pareados novamente
+  const usersWithActiveConversation = new Set(
+    conversationsWithMessages.map((conv) =>
       conv.user1Id === currentUserId ? conv.user2Id : conv.user1Id
     )
   );
 
-  // Filtra usuários online que NÃO têm conversa ainda
+  // Filtra usuários online que NÃO têm conversa ativa (com mensagens)
   const eligibleUsers = availableOnlineUsers.filter(
-    (id) => !usersWithConversation.has(id)
+    (id) => !usersWithActiveConversation.has(id)
   );
 
   if (eligibleUsers.length === 0) {
@@ -362,7 +368,23 @@ export async function findRandomUser(onlineUserIds: string[]): Promise<{
   const randomUserId =
     eligibleUsers[Math.floor(Math.random() * eligibleUsers.length)];
 
-  // Cria nova conversa
+  // Verifica se já existe uma conversa VAZIA com esse usuário (para reutilizar)
+  const existingEmptyConversation = await prisma.conversation.findFirst({
+    where: {
+      OR: [
+        { user1Id: currentUserId, user2Id: randomUserId },
+        { user1Id: randomUserId, user2Id: currentUserId }
+      ],
+      messages: { none: {} }
+    }
+  });
+
+  if (existingEmptyConversation) {
+    // Reutiliza a conversa vazia existente
+    return { success: true, conversationId: existingEmptyConversation.id };
+  }
+
+  // Cria nova conversa apenas se não existir nenhuma
   const newConversation = await prisma.conversation.create({
     data: {
       user1Id: currentUserId,
