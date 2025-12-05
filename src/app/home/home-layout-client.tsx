@@ -30,8 +30,11 @@ export function HomeLayoutClient({
   const isDesktop = useIsDesktop();
   const pathname = usePathname();
 
-  // Check if we're on a chat page
-  const hasActiveChat = pathname.startsWith('/home/chat/');
+  // Check if we're on a page that should show content in the main panel
+  const hasActiveContent =
+    pathname.startsWith('/home/chat/') ||
+    pathname.startsWith('/home/settings') ||
+    pathname.startsWith('/home/profile');
 
   // On desktop, render the split-panel layout
   if (isDesktop) {
@@ -40,7 +43,7 @@ export function HomeLayoutClient({
         user={user}
         conversations={conversations}
         favorites={favorites}
-        hasActiveChat={hasActiveChat}
+        hasActiveChat={hasActiveContent}
       >
         {children}
       </DesktopLayout>
