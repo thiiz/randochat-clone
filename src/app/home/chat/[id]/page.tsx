@@ -31,6 +31,7 @@ import {
   useRef,
   useState
 } from 'react';
+import { cn } from '@/lib/utils';
 
 function getInitials(name: string) {
   return name
@@ -196,7 +197,7 @@ export default function ChatPage() {
 
         <div className='flex flex-col items-center'>
           <div className='relative'>
-            <Avatar className='border-primary h-9 w-9 border-2 sm:h-10 sm:w-10'>
+            <Avatar className='h-10 w-10 border-2 sm:h-12 sm:w-12'>
               <AvatarImage src={conversation.image || undefined} />
               <AvatarFallback className='bg-theme-accent-light text-theme-accent-text text-xs sm:text-sm'>
                 {getInitials(conversation.name)}
@@ -209,10 +210,11 @@ export default function ChatPage() {
               className='border-background absolute -right-0.5 -bottom-0.5 rounded-full border-2'
             />
           </div>
-          <span className='mt-1 max-w-[150px] truncate text-sm font-medium sm:max-w-[200px]'>
+          <span className='mt-1 max-w-[150px] truncate text-base font-medium sm:max-w-[200px]'>
             {conversation.name}
           </span>
           <OnlineIndicator
+            showIndicator={false}
             userId={conversation.otherUserId}
             lastSeenAt={conversation.lastSeenAt}
             showText

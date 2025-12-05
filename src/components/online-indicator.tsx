@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 interface OnlineIndicatorProps {
   userId?: string;
   lastSeenAt?: Date | null;
+  showIndicator?: boolean;
   showText?: boolean;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
@@ -24,6 +25,7 @@ const sizeClasses = {
 export function OnlineIndicator({
   userId,
   lastSeenAt,
+  showIndicator = true,
   showText = false,
   size = 'md',
   className
@@ -50,13 +52,15 @@ export function OnlineIndicator({
 
   return (
     <div className={cn('flex items-center gap-1.5', className)}>
-      <span
-        className={cn(
-          'rounded-full',
-          sizeClasses[size],
-          online ? 'bg-green-500' : 'bg-gray-400'
-        )}
-      />
+      {showIndicator && (
+        <span
+          className={cn(
+            'rounded-full',
+            sizeClasses[size],
+            online ? 'bg-green-500' : 'bg-gray-400'
+          )}
+        />
+      )}
       {showText && (
         <span className='text-muted-foreground text-xs'>{getStatusText()}</span>
       )}
