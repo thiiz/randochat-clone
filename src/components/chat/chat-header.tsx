@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ExpandableAvatar } from '@/components/expandable-avatar';
 import { Button } from '@/components/ui/button';
 import { OnlineIndicator } from '@/components/online-indicator';
 import { ArrowLeft, MoreVertical } from 'lucide-react';
@@ -51,17 +51,19 @@ export function ChatHeader({
         )}
 
         <div className='relative'>
-          <Avatar className='border-background h-10 w-10 border-2 sm:h-11 sm:w-11'>
-            <AvatarImage src={conversation.image || undefined} />
-            <AvatarFallback className='bg-primary/10 text-primary text-sm font-medium'>
-              {getInitials(conversation.name)}
-            </AvatarFallback>
-          </Avatar>
+          <ExpandableAvatar
+            src={conversation.image}
+            fallback={getInitials(conversation.name)}
+            name={conversation.name}
+            size='md'
+            showExpandIcon={true}
+            avatarClassName='border-2 border-background'
+          />
           <OnlineIndicator
             userId={conversation.otherUserId}
             lastSeenAt={conversation.lastSeenAt}
             size='sm'
-            className='border-background absolute right-0 bottom-0 rounded-full border-2'
+            className='border-background pointer-events-none absolute right-0 bottom-0 rounded-full border-2'
             showIndicator={true}
           />
         </div>

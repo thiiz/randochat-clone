@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ExpandableAvatar } from '@/components/expandable-avatar';
 import { cn } from '@/lib/utils';
 import { motion } from 'motion/react';
 import { Check, CheckCheck } from 'lucide-react';
@@ -18,6 +18,7 @@ interface MessageBubbleProps {
   showAvatar: boolean;
   avatarSrc?: string | null;
   initials: string;
+  userName: string;
 }
 
 export function MessageBubble({
@@ -27,7 +28,8 @@ export function MessageBubble({
   isLastInGroup,
   showAvatar,
   avatarSrc,
-  initials
+  initials,
+  userName
 }: MessageBubbleProps) {
   // Border radius logic
   const roundedClass = isMe
@@ -60,12 +62,12 @@ export function MessageBubble({
       {!isMe && (
         <div className='flex w-8 shrink-0 flex-col justify-end'>
           {showAvatar ? (
-            <Avatar className='h-8 w-8'>
-              <AvatarImage src={avatarSrc || undefined} />
-              <AvatarFallback className='bg-muted text-[10px]'>
-                {initials}
-              </AvatarFallback>
-            </Avatar>
+            <ExpandableAvatar
+              src={avatarSrc}
+              fallback={initials}
+              name={userName}
+              size='sm'
+            />
           ) : (
             <div className='w-8' />
           )}

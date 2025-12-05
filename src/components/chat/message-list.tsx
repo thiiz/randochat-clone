@@ -1,7 +1,7 @@
 import { useRef, useEffect, useLayoutEffect } from 'react';
 import { MessageBubble } from './message-bubble';
 import { TypingIndicator } from '@/components/typing-indicator';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ExpandableAvatar } from '@/components/expandable-avatar';
 
 interface Message {
   id: string;
@@ -82,10 +82,13 @@ export function MessageList({
       <div className='mx-auto max-w-3xl space-y-1 pb-4'>
         {messages.length === 0 ? (
           <div className='text-muted-foreground flex h-[50vh] flex-col items-center justify-center text-center'>
-            <Avatar className='mb-4 h-20 w-20 opacity-50 grayscale'>
-              <AvatarImage src={conversation.image || undefined} />
-              <AvatarFallback>{getInitials(conversation.name)}</AvatarFallback>
-            </Avatar>
+            <ExpandableAvatar
+              src={conversation.image}
+              fallback={getInitials(conversation.name)}
+              name={conversation.name}
+              size='lg'
+              className='mb-4 opacity-50 grayscale'
+            />
             <p className='text-lg font-medium'>Nenhuma mensagem ainda</p>
             <p className='text-sm'>
               Comece a conversa com {conversation.name}!
@@ -118,6 +121,7 @@ export function MessageList({
                 showAvatar={showAvatar}
                 avatarSrc={conversation.image}
                 initials={getInitials(conversation.name)}
+                userName={conversation.name}
               />
             );
           })
@@ -125,12 +129,12 @@ export function MessageList({
 
         {isOtherTyping && (
           <div className='mb-2 flex items-end gap-2 pl-1'>
-            <Avatar className='mb-1 h-8 w-8'>
-              <AvatarImage src={conversation.image || undefined} />
-              <AvatarFallback className='bg-muted text-[10px]'>
-                {getInitials(conversation.name)}
-              </AvatarFallback>
-            </Avatar>
+            <ExpandableAvatar
+              src={conversation.image}
+              fallback={getInitials(conversation.name)}
+              name={conversation.name}
+              size='sm'
+            />
             <div className='bg-muted/50 rounded-2xl rounded-tl-sm p-3'>
               <TypingIndicator />
             </div>
