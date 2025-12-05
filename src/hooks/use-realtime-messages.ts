@@ -1,5 +1,6 @@
 'use client';
 
+import { parseDate } from '@/lib/date';
 import { supabase } from '@/lib/supabase';
 import { useEffect } from 'react';
 
@@ -59,7 +60,7 @@ export function useRealtimeMessages({
               content: newMsg.content,
               imageUrl: newMsg.imageUrl,
               senderId: 'other',
-              createdAt: new Date(newMsg.createdAt),
+              createdAt: parseDate(newMsg.createdAt),
               isRead: newMsg.isRead
             });
           }
