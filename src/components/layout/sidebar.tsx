@@ -138,16 +138,10 @@ export function Sidebar({ user, conversations, favorites }: SidebarProps) {
                   <Link
                     key={fav.id}
                     href={`/home/chat/${fav.id}`}
-                    className='flex flex-col items-center gap-2'
+                    className='flex flex-col items-center gap-1'
                   >
                     <div className='relative'>
-                      <Avatar
-                        className={`h-14 w-14 border-2 ${
-                          activeConversationId === fav.id
-                            ? 'border-primary'
-                            : 'border-transparent'
-                        }`}
-                      >
+                      <Avatar className={`h-10 w-10 border-2`}>
                         <AvatarImage src={fav.image || undefined} />
                         <AvatarFallback className='bg-theme-accent-light text-theme-accent-text'>
                           {getInitials(fav.name)}

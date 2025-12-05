@@ -14,7 +14,7 @@ interface TypingPayload {
   timestamp: string;
 }
 
-const TYPING_TIMEOUT = 3000; // 3 segundos sem digitar = parou de digitar
+const TYPING_TIMEOUT = 1500; // 1,5 segundos sem digitar = parou de digitar
 const DEBOUNCE_DELAY = 300; // Delay entre eventos de typing
 
 export function useTypingIndicator({
