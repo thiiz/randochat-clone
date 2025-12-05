@@ -418,3 +418,90 @@ export async function markMessagesAsRead(
     data: { isRead: true }
   });
 }
+
+export async function isFavorite(conversationId: string): Promise<boolean> {
+  const session = await auth.api.getSession({
+    headers: {
+      cookie: await getSessionCookie()
+    }
+  });
+
+  if (!session?.user?.id) {
+    return false;
+  }
+
+  const favorite = await prisma.favoriteConversation.findUnique({
+    where: {
+      userId_conversationId: {
+        userId: session.user.id,
+        conversationId
+      }
+    }
+  });
+
+  return !!favorite;
+}
+
+export async function toggleFavorite(conversationId: string): Promise<{
+  success: boolean;
+  isFavorite: boolean;
+  error?: string;
+}> {
+  const session = await auth.api.getSession({
+    headers: {
+      cookie: await getSessionCookie()
+    }
+  });
+
+  if (!session?.user?.id) {
+    return { success: false, isFavorite: false, error: 'Unauthorized' };
+  }
+
+  // Verifica se a conversa existe e o usuário é participante
+  const conversation = await prisma.conversation.findUnique({
+    where: { id: conversationId }
+  });
+
+  if (!conversation) {
+    return {
+      success: false,
+      isFavorite: false,
+      error: 'Conversation not found'
+    };
+  }
+
+  const isParticipant =
+    conversation.user1Id === session.user.id ||
+    conversation.user2Id === session.user.id;
+
+  if (!isParticipant) {
+    return { success: false, isFavorite: false, error: 'Unauthorized' };
+  }
+
+  // Verifica se já é favorito
+  const existingFavorite = await prisma.favoriteConversation.findUnique({
+    where: {
+      userId_conversationId: {
+        userId: session.user.id,
+        conversationId
+      }
+    }
+  });
+
+  if (existingFavorite) {
+    // Remove dos favoritos
+    await prisma.favoriteConversation.delete({
+      where: { id: existingFavorite.id }
+    });
+    return { success: true, isFavorite: false };
+  } else {
+    // Adiciona aos favoritos
+    await prisma.favoriteConversation.create({
+      data: {
+        userId: session.user.id,
+        conversationId
+      }
+    });
+    return { success: true, isFavorite: true };
+  }
+}

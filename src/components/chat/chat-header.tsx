@@ -1,12 +1,14 @@
 import { ExpandableAvatar } from '@/components/expandable-avatar';
 import { Button } from '@/components/ui/button';
 import { OnlineIndicator } from '@/components/online-indicator';
-import { ArrowLeft, MoreVertical, StarIcon } from 'lucide-react';
+import { ArrowLeft, MoreVertical } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { FavoriteButton } from './favorite-button';
 
 interface ChatHeaderProps {
   conversation: {
+    id: string;
     name: string;
     image: string | null;
     otherUserId: string;
@@ -83,13 +85,7 @@ export function ChatHeader({
       </div>
 
       <div className='flex items-center gap-1'>
-        <Button
-          variant='ghost'
-          size='icon'
-          className='text-muted-foreground h-10 w-10 rounded-full'
-        >
-          <StarIcon className='h-5 w-5' />
-        </Button>
+        <FavoriteButton conversationId={conversation.id} />
         <Button
           variant='ghost'
           size='icon'
