@@ -198,6 +198,7 @@ export default function ChatPage() {
                 </AvatarFallback>
               </Avatar>
               <OnlineIndicator
+                userId={conversation.otherUserId}
                 lastSeenAt={conversation.lastSeenAt}
                 size='sm'
                 className='border-background absolute -right-0.5 -bottom-0.5 rounded-full border-2'
@@ -207,6 +208,7 @@ export default function ChatPage() {
               {conversation.name}
             </span>
             <OnlineIndicator
+              userId={conversation.otherUserId}
               lastSeenAt={conversation.lastSeenAt}
               showText
               className='mt-0.5 text-xs'

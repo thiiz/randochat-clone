@@ -83,6 +83,7 @@ export function ConversationsList({
               </AvatarFallback>
             </Avatar>
             <OnlineIndicator
+              userId={conv.otherUserId}
               lastSeenAt={conv.lastSeenAt}
               size='sm'
               className='border-background absolute -right-0.5 -bottom-0.5 rounded-full border-2'

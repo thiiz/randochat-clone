@@ -150,6 +150,7 @@ export function Sidebar({ user, conversations, favorites }: SidebarProps) {
                         </AvatarFallback>
                       </Avatar>
                       <OnlineIndicator
+                        userId={fav.otherUserId}
                         lastSeenAt={fav.lastSeenAt}
                         size='md'
                         className='border-background absolute -right-0.5 -bottom-0.5 rounded-full border-2'

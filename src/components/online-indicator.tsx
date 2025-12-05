@@ -1,10 +1,15 @@
 'use client';
 
-import { isUserOnline, getLastSeenText } from '@/lib/online-status';
+import { usePresenceOptional } from '@/contexts/presence-context';
+import {
+  isUserOnline as isUserOnlineByLastSeen,
+  getLastSeenText
+} from '@/lib/online-status';
 import { cn } from '@/lib/utils';
 
 interface OnlineIndicatorProps {
-  lastSeenAt: Date | null | undefined;
+  userId?: string;
+  lastSeenAt?: Date | null;
   showText?: boolean;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
@@ -17,12 +22,31 @@ const sizeClasses = {
 };
 
 export function OnlineIndicator({
+  userId,
   lastSeenAt,
   showText = false,
   size = 'md',
   className
 }: OnlineIndicatorProps) {
-  const online = isUserOnline(lastSeenAt);
+  const presence = usePresenceOptional();
+
+  // Determina se está online:
+  // 1. Se temos presença disponível E userId, usa APENAS presença (fonte real-time)
+  // 2. Senão, usa lastSeenAt como fallback
+  const hasPresenceContext = presence !== null;
+  const isOnlineViaPresence =
+    userId && hasPresenceContext && presence.isUserOnline(userId);
+  const isOnlineViaLastSeen = isUserOnlineByLastSeen(lastSeenAt);
+
+  // Prioriza presença quando disponível, senão usa lastSeenAt
+  const online =
+    hasPresenceContext && userId ? isOnlineViaPresence : isOnlineViaLastSeen;
+
+  // Determina o texto a exibir
+  const getStatusText = () => {
+    if (online) return 'Online';
+    return getLastSeenText(lastSeenAt);
+  };
 
   return (
     <div className={cn('flex items-center gap-1.5', className)}>
@@ -34,9 +58,7 @@ export function OnlineIndicator({
         )}
       />
       {showText && (
-        <span className='text-xs text-muted-foreground'>
-          {online ? 'Online' : getLastSeenText(lastSeenAt)}
-        </span>
+        <span className='text-muted-foreground text-xs'>{getStatusText()}</span>
       )}
     </div>
   );

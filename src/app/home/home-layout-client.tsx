@@ -1,6 +1,7 @@
 'use client';
 
 import { DesktopLayout } from '@/components/layout/desktop-layout';
+import { PresenceProvider } from '@/contexts/presence-context';
 import { useIsDesktop } from '@/hooks/use-media-query';
 import type { Conversation } from '@/hooks/use-realtime-conversations';
 import type { User } from '@/lib/auth';
@@ -36,20 +37,22 @@ export function HomeLayoutClient({
     pathname.startsWith('/home/settings') ||
     pathname.startsWith('/home/profile');
 
-  // On desktop, render the split-panel layout
-  if (isDesktop) {
-    return (
-      <DesktopLayout
-        user={user}
-        conversations={conversations}
-        favorites={favorites}
-        hasActiveChat={hasActiveContent}
-      >
-        {children}
-      </DesktopLayout>
-    );
-  }
-
-  // On mobile, render children directly (they have their own layouts)
-  return <>{children}</>;
+  // Wrap everything with PresenceProvider at the top level
+  return (
+    <PresenceProvider>
+      {isDesktop ? (
+        <DesktopLayout
+          user={user}
+          conversations={conversations}
+          favorites={favorites}
+          hasActiveChat={hasActiveContent}
+        >
+          {children}
+        </DesktopLayout>
+      ) : (
+        // On mobile, render children directly (they have their own layouts)
+        <>{children}</>
+      )}
+    </PresenceProvider>
+  );
 }
