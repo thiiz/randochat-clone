@@ -4,10 +4,14 @@ import { motion } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import LightRays from '../LightRays';
 
 export function HeroSection() {
   return (
     <section className='relative min-h-screen overflow-hidden'>
+      <div
+        style={{ width: '100%', height: '600px', position: 'absolute' }}
+      ></div>
       {/* Background decorations */}
       <div className='pointer-events-none absolute inset-0 -z-10'>
         <div className='absolute top-20 -left-40 h-[500px] w-[500px] rounded-full bg-lime-500/20 blur-[120px]' />

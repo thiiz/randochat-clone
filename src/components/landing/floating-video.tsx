@@ -9,6 +9,7 @@ import {
   useSpring,
   animate
 } from 'motion/react';
+import Orb from '../Orb';
 
 interface FloatingVideoProps {
   src: string;
@@ -16,59 +17,97 @@ interface FloatingVideoProps {
   containerRef: RefObject<HTMLDivElement | null>;
 }
 
-// Helper function to process frame data (remove black background)
-async function processFrameData(
-  canvas: HTMLCanvasElement
-): Promise<ImageBitmap> {
-  const ctx = canvas.getContext('2d')!;
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+function processFrameDataFast(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number
+): void {
+  const imageData = ctx.getImageData(0, 0, width, height);
   const data = imageData.data;
   const threshold = 30;
+  const len = data.length;
 
-  for (let i = 0; i < data.length; i += 4) {
-    const r = data[i];
-    const g = data[i + 1];
-    const b = data[i + 2];
-
-    if (r < threshold && g < threshold && b < threshold) {
+  for (let i = 0; i < len; i += 4) {
+    if (
+      data[i] < threshold &&
+      data[i + 1] < threshold &&
+      data[i + 2] < threshold
+    ) {
       data[i + 3] = 0;
     }
   }
 
   ctx.putImageData(imageData, 0, 0);
-  return createImageBitmap(canvas);
+}
+
+// Generate extraction order: key frames first, then fill gaps
+function getExtractionOrder(frameCount: number): number[] {
+  const order: number[] = [];
+  const added = new Set<number>();
+
+  // Pass 1: Key frames (0%, 25%, 50%, 75%, 100%)
+  const keyFrames = [
+    0,
+    Math.floor(frameCount * 0.25),
+    Math.floor(frameCount * 0.5),
+    Math.floor(frameCount * 0.75),
+    frameCount - 1
+  ];
+  for (const f of keyFrames) {
+    if (!added.has(f)) {
+      order.push(f);
+      added.add(f);
+    }
+  }
+
+  // Pass 2: Fill gaps with 12.5% intervals
+  const pass2 = [
+    Math.floor(frameCount * 0.125),
+    Math.floor(frameCount * 0.375),
+    Math.floor(frameCount * 0.625),
+    Math.floor(frameCount * 0.875)
+  ];
+  for (const f of pass2) {
+    if (!added.has(f)) {
+      order.push(f);
+      added.add(f);
+    }
+  }
+
+  // Pass 3: Remaining frames in order
+  for (let i = 0; i < frameCount; i++) {
+    if (!added.has(i)) {
+      order.push(i);
+      added.add(i);
+    }
+  }
+
+  return order;
 }
 
 export function FloatingVideo({
   src,
-  frameCount = 120,
+  frameCount = 60,
   containerRef
 }: FloatingVideoProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [frames, setFrames] = useState<ImageBitmap[]>([]);
-  const [isReady, setIsReady] = useState(false);
-  const currentFrameRef = useRef(0);
+  const framesRef = useRef<(ImageBitmap | null)[]>(
+    new Array(frameCount).fill(null)
+  );
+  const [hasFirstFrame, setHasFirstFrame] = useState(false);
+  const currentFrameRef = useRef(-1);
   const rafRef = useRef<number>(0);
 
-  // Track scroll progress based on the container ref passed from parent
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ['start start', 'end end']
   });
 
-  // Video position: starts next to hero text (right side) and moves to left
   const xPosition = useTransform(scrollYProgress, [0, 1], ['0%', '-100%']);
-
-  // Video vertical position: centered vertically, moves down slightly
   const yPosition = useTransform(scrollYProgress, [0, 1], ['15%', '25%']);
-
-  // Scale: starts at normal size and gets slightly smaller
   const scale = useTransform(scrollYProgress, [0, 1], [1, 0.85]);
-
-  // Opacity: always visible, slight fade at end
   const opacity = useTransform(scrollYProgress, [0, 0.9, 1], [1, 1, 0.6]);
 
-  // Idle floating animation
   const floatY = useMotionValue(0);
   const floatRotate = useMotionValue(0);
   const smoothFloatY = useSpring(floatY, { stiffness: 50, damping: 20 });
@@ -77,8 +116,8 @@ export function FloatingVideo({
     damping: 20
   });
 
-  // Check if user is at the top (idle state)
   const [isIdle, setIsIdle] = useState(true);
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     const unsubscribe = scrollYProgress.on('change', (value) => {
@@ -87,7 +126,6 @@ export function FloatingVideo({
     return unsubscribe;
   }, [scrollYProgress]);
 
-  // Idle floating animation loop
   useEffect(() => {
     if (!isIdle) {
       floatY.set(0);
@@ -95,14 +133,12 @@ export function FloatingVideo({
       return;
     }
 
-    // Animate floating up and down
     const floatAnimation = animate(floatY, [0, -15, 0], {
       duration: 4,
       repeat: Infinity,
       ease: 'easeInOut'
     });
 
-    // Subtle rotation
     const rotateAnimation = animate(floatRotate, [0, 2, 0, -2, 0], {
       duration: 6,
       repeat: Infinity,
@@ -115,56 +151,30 @@ export function FloatingVideo({
     };
   }, [isIdle, floatY, floatRotate]);
 
-  // Extract frames from video
-  useEffect(() => {
-    const video = document.createElement('video');
-    video.src = src;
-    video.muted = true;
-    video.playsInline = true;
-    video.preload = 'auto';
-    video.crossOrigin = 'anonymous';
+  // Find nearest available frame
+  const findNearestFrame = useCallback(
+    (targetIndex: number): number => {
+      const frames = framesRef.current;
+      if (frames[targetIndex]) return targetIndex;
 
-    const extractFrames = async () => {
-      await new Promise<void>((resolve) => {
-        video.onloadeddata = () => resolve();
-        video.load();
-      });
-
-      const duration = video.duration;
-      const extractedFrames: ImageBitmap[] = [];
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d')!;
-
-      for (let i = 0; i < frameCount; i++) {
-        const time = (i / (frameCount - 1)) * duration;
-        video.currentTime = time;
-
-        await new Promise<void>((resolve) => {
-          video.onseeked = () => resolve();
-        });
-
-        ctx.drawImage(video, 0, 0);
-        const bitmap = await processFrameData(canvas);
-        extractedFrames.push(bitmap);
+      // Search outward from target
+      for (let offset = 1; offset < frameCount; offset++) {
+        if (targetIndex - offset >= 0 && frames[targetIndex - offset]) {
+          return targetIndex - offset;
+        }
+        if (targetIndex + offset < frameCount && frames[targetIndex + offset]) {
+          return targetIndex + offset;
+        }
       }
+      return 0;
+    },
+    [frameCount]
+  );
 
-      setFrames(extractedFrames);
-      setIsReady(true);
-    };
-
-    extractFrames();
-
-    return () => {
-      video.src = '';
-    };
-  }, [src, frameCount]);
-
-  // Draw frame based on scroll
   const drawFrame = useCallback(
     (progress: number) => {
-      if (!isReady || frames.length === 0) return;
+      const frames = framesRef.current;
+      if (!frames.some((f) => f !== null)) return;
 
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current);
@@ -177,14 +187,15 @@ export function FloatingVideo({
         const ctx = canvas.getContext('2d', { alpha: true });
         if (!ctx) return;
 
-        const frameIndex = Math.min(
-          Math.max(Math.floor(progress * (frames.length - 1)), 0),
-          frames.length - 1
+        const targetFrame = Math.min(
+          Math.floor(progress * (frameCount - 1)),
+          frameCount - 1
         );
+        const frameIndex = findNearestFrame(targetFrame);
 
-        if (frameIndex !== currentFrameRef.current) {
+        if (frameIndex !== currentFrameRef.current && frames[frameIndex]) {
           currentFrameRef.current = frameIndex;
-          const frame = frames[frameIndex];
+          const frame = frames[frameIndex]!;
 
           if (canvas.width !== frame.width || canvas.height !== frame.height) {
             canvas.width = frame.width;
@@ -196,28 +207,93 @@ export function FloatingVideo({
         }
       });
     },
-    [isReady, frames]
+    [frameCount, findNearestFrame]
   );
 
-  // Draw first frame when ready
   useEffect(() => {
-    if (!isReady || frames.length === 0) return;
+    if (!hasFirstFrame) return;
+    const unsubscribe = scrollYProgress.on('change', drawFrame);
+    return unsubscribe;
+  }, [hasFirstFrame, scrollYProgress, drawFrame]);
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  useEffect(() => {
+    let isCancelled = false;
+    const video = document.createElement('video');
 
-    const ctx = canvas.getContext('2d', { alpha: true });
-    if (!ctx) return;
+    const loadVideo = async () => {
+      video.src = src;
+      video.muted = true;
+      video.playsInline = true;
+      video.preload = 'auto';
+      video.crossOrigin = 'anonymous';
 
-    const firstFrame = frames[0];
-    canvas.width = firstFrame.width;
-    canvas.height = firstFrame.height;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(firstFrame, 0, 0);
-    currentFrameRef.current = 0;
-  }, [isReady, frames]);
+      await new Promise<void>((resolve) => {
+        video.onloadeddata = () => resolve();
+        video.load();
+      });
 
-  // Cleanup RAF on unmount
+      if (isCancelled) return;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
+      const duration = video.duration;
+
+      const extractionOrder = getExtractionOrder(frameCount);
+
+      for (let i = 0; i < extractionOrder.length; i++) {
+        if (isCancelled) break;
+
+        const frameIndex = extractionOrder[i];
+        const time = (frameIndex / (frameCount - 1)) * duration;
+        video.currentTime = time;
+
+        await new Promise<void>((resolve) => {
+          video.onseeked = () => resolve();
+        });
+
+        ctx.drawImage(video, 0, 0);
+        processFrameDataFast(ctx, canvas.width, canvas.height);
+        const bitmap = await createImageBitmap(canvas);
+
+        framesRef.current[frameIndex] = bitmap;
+
+        // First frame extracted: show and enable animation
+        if (i === 0) {
+          const displayCanvas = canvasRef.current;
+          if (displayCanvas) {
+            displayCanvas.width = bitmap.width;
+            displayCanvas.height = bitmap.height;
+            const displayCtx = displayCanvas.getContext('2d', { alpha: true });
+            if (displayCtx) {
+              displayCtx.clearRect(
+                0,
+                0,
+                displayCanvas.width,
+                displayCanvas.height
+              );
+              displayCtx.drawImage(bitmap, 0, 0);
+            }
+          }
+          setHasFirstFrame(true);
+        }
+
+        // Yield every 3 frames
+        if (i % 3 === 0 && i > 0) {
+          await new Promise((resolve) => setTimeout(resolve, 0));
+        }
+      }
+    };
+
+    loadVideo();
+
+    return () => {
+      isCancelled = true;
+      video.src = '';
+    };
+  }, [src, frameCount]);
+
   useEffect(() => {
     return () => {
       if (rafRef.current) {
@@ -225,13 +301,6 @@ export function FloatingVideo({
       }
     };
   }, []);
-
-  // Sync with scroll
-  useEffect(() => {
-    if (!isReady) return;
-    const unsubscribe = scrollYProgress.on('change', drawFrame);
-    return unsubscribe;
-  }, [isReady, scrollYProgress, drawFrame]);
 
   return (
     <motion.div
@@ -243,19 +312,38 @@ export function FloatingVideo({
         translateY: smoothFloatY,
         rotate: smoothFloatRotate
       }}
-      className='pointer-events-none fixed top-0 left-1/2 z-0 h-[400px] w-[400px] md:h-[500px] md:w-[500px] lg:h-[700px] lg:w-[700px]'
+      className='pointer-events-none fixed top-0 left-1/2 z-50 h-[400px] w-[400px] md:h-[500px] md:w-[500px] lg:h-[700px] lg:w-[700px]'
     >
-      {/* Loading state */}
-      {!isReady && (
+      <div
+        style={{
+          width: '100%',
+          height: '600px',
+          position: 'relative',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          zIndex: 10
+        }}
+        className='pointer-events-auto'
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <Orb
+          hoverIntensity={1}
+          rotateOnHover={true}
+          hue={105}
+          forceHoverState={isHovered}
+        />
+      </div>
+      {!hasFirstFrame && (
         <div className='flex h-full w-full items-center justify-center'>
           <div className='border-primary h-12 w-12 animate-spin rounded-full border-3 border-t-transparent' />
         </div>
       )}
 
-      {/* Canvas for frames */}
       <canvas
         ref={canvasRef}
-        className={`h-full w-full object-contain ${isReady ? 'block' : 'hidden'}`}
+        className={`h-full w-full object-contain ${hasFirstFrame ? 'block' : 'hidden'}`}
       />
     </motion.div>
   );
