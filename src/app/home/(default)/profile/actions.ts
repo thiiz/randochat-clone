@@ -2,16 +2,23 @@
 
 import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
-import { headers } from 'next/headers';
-import { revalidatePath } from 'next/cache';
 import { createClient } from '@supabase/supabase-js';
+import { revalidatePath } from 'next/cache';
+import { headers } from 'next/headers';
+import { avatarUploadSchema, profileSchema } from './schema';
 
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export async function uploadAvatar(formData: FormData) {
+type ActionResult<T = void> =
+  | { success: true; data?: T }
+  | { error: string; fieldErrors?: Record<string, string[]> };
+
+export async function uploadAvatar(
+  formData: FormData
+): Promise<ActionResult<{ url: string }>> {
   const session = await auth.api.getSession({
     headers: await headers()
   });
@@ -25,13 +32,12 @@ export async function uploadAvatar(formData: FormData) {
     return { error: 'Nenhum arquivo enviado' };
   }
 
-  if (!file.type.startsWith('image/')) {
-    return { error: 'Por favor, selecione uma imagem' };
-  }
+  // Validação com Zod
+  const validation = await avatarUploadSchema.safeParseAsync({ file });
 
-  // A imagem já vem comprimida do cliente, mas verificamos por segurança
-  if (file.size > 1 * 1024 * 1024) {
-    return { error: 'A imagem deve ter no máximo 1MB' };
+  if (!validation.success) {
+    const firstError = validation.error.issues[0];
+    return { error: firstError?.message || 'Arquivo inválido' };
   }
 
   try {
@@ -70,14 +76,24 @@ export async function uploadAvatar(formData: FormData) {
       .getPublicUrl(fileName);
 
     // Adiciona timestamp para evitar cache do navegador
-    return { url: `${data.publicUrl}?t=${Date.now()}` };
+    return {
+      success: true,
+      data: { url: `${data.publicUrl}?t=${Date.now()}` }
+    };
   } catch (err) {
     console.error('Upload error:', err);
     return { error: 'Erro ao fazer upload da imagem' };
   }
 }
 
-export async function updateProfile(formData: FormData) {
+interface UpdateProfileInput {
+  name: string;
+  image?: string;
+}
+
+export async function updateProfile(
+  input: UpdateProfileInput
+): Promise<ActionResult> {
   const session = await auth.api.getSession({
     headers: await headers()
   });
@@ -86,22 +102,33 @@ export async function updateProfile(formData: FormData) {
     return { error: 'Não autorizado' };
   }
 
-  const name = formData.get('name') as string;
-  const image = formData.get('image') as string;
+  // Validação com Zod
+  const validation = profileSchema.safeParse(input);
 
-  if (!name || name.trim().length < 2) {
-    return { error: 'Nome deve ter pelo menos 2 caracteres' };
+  if (!validation.success) {
+    const fieldErrors: Record<string, string[]> = {};
+
+    for (const issue of validation.error.issues) {
+      const path = issue.path.map(String).join('.');
+      if (!fieldErrors[path]) {
+        fieldErrors[path] = [];
+      }
+      fieldErrors[path].push(issue.message);
+    }
+
+    return {
+      error: 'Dados inválidos',
+      fieldErrors
+    };
   }
 
-  if (name.trim().length > 50) {
-    return { error: 'Nome deve ter no máximo 50 caracteres' };
-  }
+  const { name, image } = validation.data;
 
   try {
     await prisma.user.update({
       where: { id: session.user.id },
       data: {
-        name: name.trim(),
+        name,
         image: image?.trim() || null
       }
     });

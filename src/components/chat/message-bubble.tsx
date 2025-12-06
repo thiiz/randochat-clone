@@ -108,7 +108,8 @@ export function MessageBubble({
           <span className='text-[10px]'>
             {new Date(message.createdAt).toLocaleTimeString([], {
               hour: '2-digit',
-              minute: '2-digit'
+              minute: '2-digit',
+              hour12: false
             })}
           </span>
           {isMe && (
