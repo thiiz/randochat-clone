@@ -32,7 +32,7 @@ const DEFAULT_THEMES = [
   },
   {
     name: 'Neutro',
-    value: 'default'
+    value: 'neutral'
   }
 ];
 
@@ -47,7 +47,7 @@ const SCALED_THEMES = [
   },
   {
     name: 'Neutro',
-    value: 'default-scaled'
+    value: 'neutral-scaled'
   }
 ];
 
