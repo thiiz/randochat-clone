@@ -15,7 +15,8 @@ import {
   sendMessage
 } from '@/lib/chat-actions';
 import { useParams } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
+import { useFailedMessages } from '@/hooks/use-failed-messages';
 
 interface Message {
   id: string;
@@ -46,6 +47,9 @@ export default function ChatPage() {
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+
+  const { failedMessages, saveFailedMessage, removeFailedMessage } =
+    useFailedMessages(conversationId);
 
   const handleNewMessage = useCallback(
     (newMessage: Message) => {
@@ -99,6 +103,29 @@ export default function ChatPage() {
     loadConversation();
   }, [conversationId]);
 
+  // Combina mensagens do servidor com mensagens falhadas do localStorage
+  const allMessages = useMemo(() => {
+    const failed: Message[] = failedMessages.map((fm) => ({
+      id: fm.id,
+      content: fm.content,
+      imageUrl: fm.imageUrl,
+      senderId: 'me' as const,
+      createdAt: new Date(fm.createdAt),
+      isRead: false,
+      status: 'failed' as const
+    }));
+
+    // Filtra mensagens falhadas que já existem no estado (evita duplicatas)
+    const newFailed = failed.filter(
+      (fm) => !messages.some((m) => m.id === fm.id)
+    );
+
+    return [...messages, ...newFailed].sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+  }, [messages, failedMessages]);
+
   const handleSend = async () => {
     if (!message.trim() || !conversation) return;
 
@@ -131,10 +158,11 @@ export default function ChatPage() {
       );
     } catch (error) {
       console.error('Failed to send message:', error);
-      // Marca a mensagem como falha
+      // Marca a mensagem como falha e salva no localStorage
       setMessages((prev) =>
         prev.map((m) => (m.id === tempId ? { ...m, status: 'failed' } : m))
       );
+      saveFailedMessage(tempMessage);
     } finally {
       setSending(false);
     }
@@ -142,7 +170,7 @@ export default function ChatPage() {
 
   const handleRetry = useCallback(
     async (messageId: string) => {
-      const failedMessage = messages.find((m) => m.id === messageId);
+      const failedMessage = allMessages.find((m) => m.id === messageId);
       if (!failedMessage || !failedMessage.content) return;
 
       // Atualiza status para 'sending'
@@ -155,12 +183,18 @@ export default function ChatPage() {
           conversationId,
           failedMessage.content
         );
-        // Substitui a mensagem falha pela real
-        setMessages((prev) =>
-          prev.map((m) =>
+        // Substitui a mensagem falha pela real e remove do localStorage
+        setMessages((prev) => {
+          // Se a mensagem não existe no estado (veio do localStorage), adiciona
+          const exists = prev.some((m) => m.id === messageId);
+          if (!exists) {
+            return [...prev, { ...newMessage, status: 'sent' as const }];
+          }
+          return prev.map((m) =>
             m.id === messageId ? { ...newMessage, status: 'sent' as const } : m
-          )
-        );
+          );
+        });
+        removeFailedMessage(messageId);
       } catch (error) {
         console.error('Failed to retry message:', error);
         // Marca novamente como falha
@@ -169,7 +203,7 @@ export default function ChatPage() {
         );
       }
     },
-    [conversationId, messages]
+    [conversationId, allMessages, removeFailedMessage]
   );
 
   if (loading) {
@@ -202,7 +236,7 @@ export default function ChatPage() {
       <ChatHeader conversation={conversation} isDesktop={isDesktop} />
 
       <MessageList
-        messages={messages}
+        messages={allMessages}
         conversation={conversation}
         isOtherTyping={isOtherTyping}
         loading={loading}
