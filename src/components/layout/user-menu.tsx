@@ -27,9 +27,14 @@ export function UserMenu({ user: initialUser }: UserMenuProps) {
   const user = session?.user || initialUser;
 
   const handleLogout = async () => {
-    await signOut();
-    router.push('/sign-in');
-    router.refresh();
+    await signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push('/sign-in');
+          router.refresh();
+        }
+      }
+    });
   };
 
   const getInitials = (name?: string | null) => {
