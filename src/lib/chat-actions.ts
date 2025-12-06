@@ -3,6 +3,7 @@
 import { cookies } from 'next/headers';
 import { auth } from './auth';
 import prisma from './prisma';
+import { getOnlineUserIdsFromServer } from './supabase-server';
 
 async function getSessionCookie() {
   const cookieStore = await cookies();
@@ -290,7 +291,7 @@ export async function sendMessage(
   };
 }
 
-export async function findRandomUser(onlineUserIds: string[]): Promise<{
+export async function findRandomUser(): Promise<{
   success: boolean;
   conversationId?: string;
   error?: string;
@@ -318,13 +319,15 @@ export async function findRandomUser(onlineUserIds: string[]): Promise<{
     };
   }
 
+  // Busca usuários online diretamente do servidor (não confia no cliente)
+  const onlineUserIds = await getOnlineUserIdsFromServer();
+
   // Filtra o próprio usuário da lista de online
   const availableOnlineUsers = onlineUserIds.filter(
     (id) => id !== currentUserId
   );
 
   if (availableOnlineUsers.length === 0) {
-    // Aplica rate limit quando não há usuários online
     await setRateLimit(currentUserId, 'random_search');
     return {
       success: false,
@@ -333,29 +336,36 @@ export async function findRandomUser(onlineUserIds: string[]): Promise<{
     };
   }
 
-  // Busca conversas existentes COM mensagens (são as que realmente "contam")
-  const conversationsWithMessages = await prisma.conversation.findMany({
-    where: {
-      OR: [{ user1Id: currentUserId }, { user2Id: currentUserId }],
-      messages: { some: {} }
-    },
-    select: { user1Id: true, user2Id: true }
-  });
+  // Query única otimizada: busca usuário aleatório elegível
+  // - Está na lista de online (validada no servidor)
+  // - Não tem conversa COM mensagens com o usuário atual
+  // - Não é um favorito do usuário atual
+  const randomUserResult = await prisma.$queryRaw<{ id: string }[]>`
+    SELECT u.id
+    FROM "user" u
+    WHERE u.id = ANY(${availableOnlineUsers}::text[])
+      AND NOT EXISTS (
+        SELECT 1 FROM "conversation" c
+        WHERE (
+          (c."user1Id" = ${currentUserId} AND c."user2Id" = u.id)
+          OR (c."user1Id" = u.id AND c."user2Id" = ${currentUserId})
+        )
+        AND EXISTS (SELECT 1 FROM "message" m WHERE m."conversationId" = c.id)
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM "favorite_conversation" fc
+        JOIN "conversation" c2 ON fc."conversationId" = c2.id
+        WHERE fc."userId" = ${currentUserId}
+          AND (
+            (c2."user1Id" = ${currentUserId} AND c2."user2Id" = u.id)
+            OR (c2."user1Id" = u.id AND c2."user2Id" = ${currentUserId})
+          )
+      )
+    ORDER BY RANDOM()
+    LIMIT 1
+  `;
 
-  // Usuários que já têm conversa COM mensagens não podem ser pareados novamente
-  const usersWithActiveConversation = new Set(
-    conversationsWithMessages.map((conv) =>
-      conv.user1Id === currentUserId ? conv.user2Id : conv.user1Id
-    )
-  );
-
-  // Filtra usuários online que NÃO têm conversa ativa (com mensagens)
-  const eligibleUsers = availableOnlineUsers.filter(
-    (id) => !usersWithActiveConversation.has(id)
-  );
-
-  if (eligibleUsers.length === 0) {
-    // Aplica rate limit quando não encontra usuário elegível
+  if (randomUserResult.length === 0) {
     await setRateLimit(currentUserId, 'random_search');
     return {
       success: false,
@@ -364,9 +374,7 @@ export async function findRandomUser(onlineUserIds: string[]): Promise<{
     };
   }
 
-  // Seleciona um usuário aleatório
-  const randomUserId =
-    eligibleUsers[Math.floor(Math.random() * eligibleUsers.length)];
+  const randomUserId = randomUserResult[0].id;
 
   // Verifica se já existe uma conversa VAZIA com esse usuário (para reutilizar)
   const existingEmptyConversation = await prisma.conversation.findFirst({
@@ -380,7 +388,6 @@ export async function findRandomUser(onlineUserIds: string[]): Promise<{
   });
 
   if (existingEmptyConversation) {
-    // Reutiliza a conversa vazia existente
     return { success: true, conversationId: existingEmptyConversation.id };
   }
 
