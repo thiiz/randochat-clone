@@ -47,8 +47,7 @@ export default function SignUpPage() {
       const { error } = await signUp.email({
         email,
         password,
-        name,
-        callbackURL: '/'
+        name
       });
 
       if (error) {

@@ -34,8 +34,7 @@ export default function SignInPage() {
     try {
       const { error } = await signIn.email({
         email,
-        password,
-        callbackURL: callbackUrl
+        password
       });
 
       if (error) {
