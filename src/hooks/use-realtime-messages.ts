@@ -29,12 +29,14 @@ interface UseRealtimeMessagesProps {
   conversationId: string;
   currentUserId: string;
   onNewMessage: (message: Message) => void;
+  onMessageRead?: (messageId: string) => void;
 }
 
 export function useRealtimeMessages({
   conversationId,
   currentUserId,
-  onNewMessage
+  onNewMessage,
+  onMessageRead
 }: UseRealtimeMessagesProps) {
   useEffect(() => {
     // Não conecta se não tiver userId ainda
@@ -66,10 +68,31 @@ export function useRealtimeMessages({
           }
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'message',
+          filter: `conversationId=eq.${conversationId}`
+        },
+        (payload: RealtimePayload) => {
+          const updatedMsg = payload.new;
+
+          // Atualiza isRead para mensagens enviadas pelo usuário atual
+          if (
+            updatedMsg.senderId === currentUserId &&
+            updatedMsg.isRead &&
+            onMessageRead
+          ) {
+            onMessageRead(updatedMsg.id);
+          }
+        }
+      )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [conversationId, currentUserId, onNewMessage]);
+  }, [conversationId, currentUserId, onNewMessage, onMessageRead]);
 }

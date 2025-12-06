@@ -61,10 +61,17 @@ export default function ChatPage() {
     [conversationId]
   );
 
+  const handleMessageRead = useCallback((messageId: string) => {
+    setMessages((prev) =>
+      prev.map((m) => (m.id === messageId ? { ...m, isRead: true } : m))
+    );
+  }, []);
+
   useRealtimeMessages({
     conversationId,
     currentUserId: session?.user?.id || '',
-    onNewMessage: handleNewMessage
+    onNewMessage: handleNewMessage,
+    onMessageRead: handleMessageRead
   });
 
   const { isOtherTyping, sendTypingEvent, stopTyping } = useTypingIndicator({
