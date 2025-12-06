@@ -3,6 +3,8 @@
 import { ChatHeader } from '@/components/chat/chat-header';
 import { ChatInput } from '@/components/chat/chat-input';
 import { MessageList } from '@/components/chat/message-list';
+import { NoiseBackground } from '@/components/ui/noise-background';
+import { GridBackground } from '@/components/ui/grid-background';
 import { useIsDesktop } from '@/hooks/use-media-query';
 import { useRealtimeMessages } from '@/hooks/use-realtime-messages';
 import { useTypingIndicator } from '@/hooks/use-typing-indicator';
@@ -131,8 +133,10 @@ export default function ChatPage() {
 
   return (
     <div
-      className={`bg-background flex flex-col ${isDesktop ? 'h-full' : 'fixed inset-0 h-dvh'}`}
+      className={`bg-background relative flex flex-col ${isDesktop ? 'h-full' : 'fixed inset-0 h-dvh'}`}
     >
+      <NoiseBackground />
+      <GridBackground opacity={0.3} />
       <ChatHeader conversation={conversation} isDesktop={isDesktop} />
 
       <MessageList
