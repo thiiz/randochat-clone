@@ -24,6 +24,7 @@ interface Message {
   senderId: 'me' | 'other';
   createdAt: Date;
   isRead: boolean;
+  status?: 'sending' | 'sent' | 'failed';
 }
 
 interface Conversation {
@@ -102,20 +103,74 @@ export default function ChatPage() {
     if (!message.trim() || !conversation) return;
 
     const messageText = message;
+    const tempId = `temp-${Date.now()}`;
+
+    // Adiciona mensagem temporária com status 'sending'
+    const tempMessage: Message = {
+      id: tempId,
+      content: messageText,
+      imageUrl: null,
+      senderId: 'me',
+      createdAt: new Date(),
+      isRead: false,
+      status: 'sending'
+    };
+
+    setMessages((prev) => [...prev, tempMessage]);
     setMessage('');
     setSending(true);
     stopTyping();
 
     try {
       const newMessage = await sendMessage(conversationId, messageText);
-      setMessages((prev) => [...prev, newMessage]);
+      // Substitui a mensagem temporária pela real
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === tempId ? { ...newMessage, status: 'sent' as const } : m
+        )
+      );
     } catch (error) {
       console.error('Failed to send message:', error);
-      setMessage(messageText);
+      // Marca a mensagem como falha
+      setMessages((prev) =>
+        prev.map((m) => (m.id === tempId ? { ...m, status: 'failed' } : m))
+      );
     } finally {
       setSending(false);
     }
   };
+
+  const handleRetry = useCallback(
+    async (messageId: string) => {
+      const failedMessage = messages.find((m) => m.id === messageId);
+      if (!failedMessage || !failedMessage.content) return;
+
+      // Atualiza status para 'sending'
+      setMessages((prev) =>
+        prev.map((m) => (m.id === messageId ? { ...m, status: 'sending' } : m))
+      );
+
+      try {
+        const newMessage = await sendMessage(
+          conversationId,
+          failedMessage.content
+        );
+        // Substitui a mensagem falha pela real
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === messageId ? { ...newMessage, status: 'sent' as const } : m
+          )
+        );
+      } catch (error) {
+        console.error('Failed to retry message:', error);
+        // Marca novamente como falha
+        setMessages((prev) =>
+          prev.map((m) => (m.id === messageId ? { ...m, status: 'failed' } : m))
+        );
+      }
+    },
+    [conversationId, messages]
+  );
 
   if (loading) {
     return (
@@ -151,6 +206,7 @@ export default function ChatPage() {
         conversation={conversation}
         isOtherTyping={isOtherTyping}
         loading={loading}
+        onRetry={handleRetry}
       />
 
       <ChatInput

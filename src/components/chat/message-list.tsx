@@ -10,6 +10,7 @@ interface Message {
   senderId: 'me' | 'other';
   createdAt: Date;
   isRead: boolean;
+  status?: 'sending' | 'sent' | 'failed';
 }
 
 interface MessageListProps {
@@ -20,6 +21,7 @@ interface MessageListProps {
   };
   isOtherTyping: boolean;
   loading: boolean;
+  onRetry?: (messageId: string) => void;
 }
 
 function getInitials(name: string) {
@@ -35,7 +37,8 @@ export function MessageList({
   messages,
   conversation,
   isOtherTyping,
-  loading
+  loading,
+  onRetry
 }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -122,6 +125,7 @@ export function MessageList({
                 avatarSrc={conversation.image}
                 initials={getInitials(conversation.name)}
                 userName={conversation.name}
+                onRetry={onRetry}
               />
             );
           })

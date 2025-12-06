@@ -1,7 +1,13 @@
 import { ExpandableAvatar } from '@/components/expandable-avatar';
 import { cn } from '@/lib/utils';
 import { motion } from 'motion/react';
-import { Check, CheckCheck } from 'lucide-react';
+import {
+  Check,
+  CheckCheck,
+  AlertCircle,
+  RotateCcw,
+  Loader2
+} from 'lucide-react';
 
 interface MessageBubbleProps {
   message: {
@@ -11,6 +17,7 @@ interface MessageBubbleProps {
     senderId: 'me' | 'other';
     createdAt: Date;
     isRead: boolean;
+    status?: 'sending' | 'sent' | 'failed';
   };
   isMe: boolean;
   isFirstInGroup: boolean;
@@ -19,6 +26,7 @@ interface MessageBubbleProps {
   avatarSrc?: string | null;
   initials: string;
   userName: string;
+  onRetry?: (messageId: string) => void;
 }
 
 export function MessageBubble({
@@ -29,8 +37,11 @@ export function MessageBubble({
   showAvatar,
   avatarSrc,
   initials,
-  userName
+  userName,
+  onRetry
 }: MessageBubbleProps) {
+  const isFailed = message.status === 'failed';
+  const isSending = message.status === 'sending';
   // Border radius logic
   const roundedClass = isMe
     ? cn(
@@ -78,8 +89,11 @@ export function MessageBubble({
         className={cn(
           'relative max-w-[80%] px-4 py-2 shadow-sm sm:max-w-[70%]',
           isMe
-            ? 'bg-primary text-primary-foreground'
+            ? isFailed
+              ? 'bg-destructive/80 text-destructive-foreground'
+              : 'bg-primary text-primary-foreground'
             : 'bg-muted/80 text-foreground dark:bg-muted/50',
+          isSending && 'opacity-70',
           roundedClass
         )}
       >
@@ -102,9 +116,23 @@ export function MessageBubble({
             'mt-1 flex items-center gap-1 select-none',
             isMe
               ? 'text-primary-foreground/70 justify-end'
-              : 'text-muted-foreground justify-start'
+              : 'text-muted-foreground justify-start',
+            isFailed && 'text-destructive-foreground/70'
           )}
         >
+          {isMe && (
+            <span>
+              {isSending ? (
+                <Loader2 className='h-3 w-3 animate-spin' />
+              ) : isFailed ? (
+                <AlertCircle className='h-3 w-3' />
+              ) : message.isRead ? (
+                <CheckCheck className='h-3 w-3' />
+              ) : (
+                <Check className='h-3 w-3' />
+              )}
+            </span>
+          )}
           <span className='text-[10px]'>
             {new Date(message.createdAt).toLocaleTimeString([], {
               hour: '2-digit',
@@ -112,17 +140,19 @@ export function MessageBubble({
               hour12: false
             })}
           </span>
-          {isMe && (
-            <span>
-              {message.isRead ? (
-                <CheckCheck className='h-3 w-3' />
-              ) : (
-                <Check className='h-3 w-3' />
-              )}
-            </span>
-          )}
         </div>
       </div>
+
+      {/* Botão de retry para mensagens com falha */}
+      {isFailed && onRetry && (
+        <button
+          onClick={() => onRetry(message.id)}
+          className='text-destructive hover:text-destructive/80 flex items-center gap-1 self-center transition-colors'
+          title='Tentar novamente'
+        >
+          <RotateCcw className='h-4 w-4' />
+        </button>
+      )}
     </motion.div>
   );
 }
