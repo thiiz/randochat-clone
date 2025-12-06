@@ -1,8 +1,47 @@
+'use client';
+
+import { useRef } from 'react';
+import {
+  Navbar,
+  HeroSection,
+  FeaturesSection,
+  HowItWorksSection,
+  CTASection,
+  Footer
+} from '@/components/landing';
+import { FloatingVideo } from '@/components/landing/floating-video';
+
 const LandingPage = () => {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
   return (
-    <div>
-      <h1>Landing Page</h1>
-    </div>
+    <main className='relative min-h-screen overflow-x-hidden'>
+      <Navbar />
+
+      {/* Scroll container for video animation - covers Hero + Features */}
+      <div ref={scrollContainerRef} className='relative'>
+        {/* Floating video that crosses the screen */}
+        <FloatingVideo
+          src='/hero-video.webm'
+          containerRef={scrollContainerRef}
+        />
+
+        {/* Hero Section */}
+        <HeroSection />
+
+        {/* Features Section - video completes animation here */}
+        <div id='features'>
+          <FeaturesSection />
+        </div>
+      </div>
+
+      {/* Remaining sections */}
+      <div id='how-it-works'>
+        <HowItWorksSection />
+      </div>
+      <CTASection />
+      <Footer />
+    </main>
   );
 };
 
