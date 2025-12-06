@@ -18,7 +18,7 @@ const LandingPage = () => {
     <main className='relative min-h-screen overflow-x-hidden'>
       <Navbar />
 
-      {/* Scroll container for video animation - covers Hero + Features */}
+      {/* Scroll container for video animation - covers all sections until footer */}
       <div ref={scrollContainerRef} className='relative'>
         {/* Floating video that crosses the screen */}
         <FloatingVideo
@@ -29,17 +29,17 @@ const LandingPage = () => {
         {/* Hero Section */}
         <HeroSection />
 
-        {/* Features Section - video completes animation here */}
+        {/* Features Section */}
         <div id='features'>
           <FeaturesSection />
         </div>
+
+        <div id='how-it-works'>
+          <HowItWorksSection />
+        </div>
+        <CTASection />
       </div>
 
-      {/* Remaining sections */}
-      <div id='how-it-works'>
-        <HowItWorksSection />
-      </div>
-      <CTASection />
       <Footer />
     </main>
   );

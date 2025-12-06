@@ -117,8 +117,6 @@ export function FloatingVideo({
   });
 
   const [isIdle, setIsIdle] = useState(true);
-  const [isHovered, setIsHovered] = useState(false);
-
   useEffect(() => {
     const unsubscribe = scrollYProgress.on('change', (value) => {
       setIsIdle(value < 0.02);
@@ -312,28 +310,20 @@ export function FloatingVideo({
         translateY: smoothFloatY,
         rotate: smoothFloatRotate
       }}
-      className='pointer-events-none fixed top-0 left-1/2 z-50 h-[400px] w-[400px] md:h-[500px] md:w-[500px] lg:h-[700px] lg:w-[700px]'
+      className='pointer-events-none fixed top-0 left-1/2 z-10 h-[400px] w-[400px] md:h-[500px] md:w-[500px] lg:h-[700px] lg:w-[700px]'
     >
       <div
         style={{
           width: '100%',
           height: '600px',
-          position: 'relative',
+          position: 'absolute',
           top: '50%',
           left: '50%',
-          transform: 'translate(-50%, -50%)',
-          zIndex: 10
+          transform: 'translate(-50%, -50%)'
         }}
         className='pointer-events-auto'
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
       >
-        <Orb
-          hoverIntensity={1}
-          rotateOnHover={true}
-          hue={105}
-          forceHoverState={isHovered}
-        />
+        <Orb hoverIntensity={1} rotateOnHover={true} hue={105} />
       </div>
       {!hasFirstFrame && (
         <div className='flex h-full w-full items-center justify-center'>
