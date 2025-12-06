@@ -1,7 +1,7 @@
 export function GridBackground({
   className = '',
-  opacity = 0.5,
-  size = 1000
+  opacity = 1,
+  size = 2000
 }: {
   className?: string;
   opacity?: number;

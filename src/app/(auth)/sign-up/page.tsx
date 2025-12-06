@@ -73,7 +73,7 @@ export default function SignUpPage() {
   };
 
   return (
-    <Card className='border-border/50 shadow-lg'>
+    <Card className='border-border bg-background/50 shadow-2xl backdrop-blur-xl'>
       <CardHeader className='space-y-1'>
         <CardTitle className='text-2xl font-bold'>Criar Conta</CardTitle>
         <CardDescription>
