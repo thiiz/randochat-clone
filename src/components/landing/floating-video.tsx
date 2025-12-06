@@ -310,7 +310,7 @@ export function FloatingVideo({
         translateY: smoothFloatY,
         rotate: smoothFloatRotate
       }}
-      className='pointer-events-none fixed top-0 left-1/2 z-10 h-[400px] w-[400px] md:h-[500px] md:w-[500px] lg:h-[700px] lg:w-[700px]'
+      className='pointer-events-none fixed top-0 left-1/2 z-10 h-[400px] w-[400px] md:h-[500px] md:w-[500px] lg:h-[600px] lg:w-[600px]'
     >
       <div
         style={{
