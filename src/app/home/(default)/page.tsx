@@ -20,10 +20,8 @@ function getInitials(name: string) {
 }
 
 export default async function Page() {
-  const [conversations, favorites] = await Promise.all([
-    getConversations(),
-    getFavoriteConversations()
-  ]);
+  const conversations = await getConversations();
+  const favorites = await getFavoriteConversations();
 
   return (
     <>
