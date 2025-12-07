@@ -83,8 +83,31 @@ export function PresenceProvider({ children }: { children: React.ReactNode }) {
         }
       });
 
+    // Atualiza lastSeenAt no banco periodicamente (a cada 30s)
+    const updateLastSeen = () => {
+      fetch('/api/presence', { method: 'POST' }).catch(console.error);
+    };
+
+    // Atualiza imediatamente ao conectar
+    updateLastSeen();
+
+    // Atualiza periodicamente
+    const interval = setInterval(updateLastSeen, 30000);
+
+    // Atualiza quando o usuário sair da página
+    const handleBeforeUnload = () => {
+      // Usa sendBeacon para garantir que a requisição seja enviada mesmo ao fechar
+      navigator.sendBeacon('/api/presence');
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
     // Cleanup ao desmontar
     return () => {
+      clearInterval(interval);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      updateLastSeen(); // Atualiza uma última vez ao desmontar
+
       if (channelRef.current) {
         channelRef.current.untrack();
         supabase.removeChannel(channelRef.current);

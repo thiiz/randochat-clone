@@ -1,11 +1,11 @@
 import { ExpandableAvatar } from '@/components/expandable-avatar';
 import { Button } from '@/components/ui/button';
 import { OnlineIndicator } from '@/components/online-indicator';
-import { ArrowLeft, MoreVertical } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { FavoriteButton } from './favorite-button';
-import { BlockButton } from './block-button';
+import { OptionsMenu } from './options-menu';
 
 interface ChatHeaderProps {
   conversation: {
@@ -88,12 +88,12 @@ export function ChatHeader({
       </div>
 
       <div className='flex items-center gap-1'>
-        <FavoriteButton conversationId={conversation.id} />
-        <BlockButton
+        <OptionsMenu
           otherUserId={conversation.otherUserId}
           userName={conversation.name}
           onBlockChange={onBlockChange}
         />
+        <FavoriteButton conversationId={conversation.id} />
       </div>
     </header>
   );

@@ -1,11 +1,24 @@
+import { parseDate } from './date';
+
 // Tempo em minutos para considerar um usuário online
 export const ONLINE_THRESHOLD_MINUTES = 5;
+
+/**
+ * Normaliza a data para garantir interpretação correta de timezone.
+ * Se for string, usa parseDate. Se já for Date, usa diretamente.
+ */
+function normalizeDate(date: Date | string): Date {
+  if (typeof date === 'string') {
+    return parseDate(date);
+  }
+  return date;
+}
 
 export function isUserOnline(lastSeenAt: Date | null | undefined): boolean {
   if (!lastSeenAt) return false;
 
   const now = new Date();
-  const lastSeen = new Date(lastSeenAt);
+  const lastSeen = normalizeDate(lastSeenAt);
   const diffMs = now.getTime() - lastSeen.getTime();
   const diffMinutes = diffMs / (1000 * 60);
 
@@ -16,7 +29,7 @@ export function getLastSeenText(lastSeenAt: Date | null | undefined): string {
   if (!lastSeenAt) return 'Nunca visto';
 
   const now = new Date();
-  const lastSeen = new Date(lastSeenAt);
+  const lastSeen = normalizeDate(lastSeenAt);
   const diffMs = now.getTime() - lastSeen.getTime();
   const diffMinutes = Math.floor(diffMs / (1000 * 60));
   const diffHours = Math.floor(diffMinutes / 60);
