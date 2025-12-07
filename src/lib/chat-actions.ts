@@ -157,6 +157,7 @@ export async function getConversationMessages(conversationId: string): Promise<{
     image: string | null;
     lastSeenAt: Date | null;
     otherUserId: string;
+    isBlocked: boolean;
   };
   messages: Array<{
     id: string;
@@ -205,6 +206,18 @@ export async function getConversationMessages(conversationId: string): Promise<{
       ? conversation.user2
       : conversation.user1;
 
+  // Verifica se há bloqueio entre os usuários
+  const block = await prisma.blockedUser.findFirst({
+    where: {
+      OR: [
+        { blockerId: session.user.id, blockedId: otherUser.id },
+        { blockerId: otherUser.id, blockedId: session.user.id }
+      ]
+    }
+  });
+
+  const isBlocked = !!block;
+
   return {
     conversation: {
       id: conversation.id,
@@ -212,7 +225,8 @@ export async function getConversationMessages(conversationId: string): Promise<{
         otherUser.name || `Anônimo #${otherUser.id.slice(0, 4).toUpperCase()}`,
       image: otherUser.image,
       lastSeenAt: otherUser.lastSeenAt,
-      otherUserId: otherUser.id
+      otherUserId: otherUser.id,
+      isBlocked
     },
     messages: conversation.messages.map((msg) => {
       const senderId: 'me' | 'other' =
@@ -265,6 +279,25 @@ export async function sendMessage(
 
   if (!isParticipant) {
     throw new Error('Unauthorized');
+  }
+
+  // Verifica se há bloqueio entre os usuários
+  const otherUserId =
+    conversation.user1Id === session.user.id
+      ? conversation.user2Id
+      : conversation.user1Id;
+
+  const block = await prisma.blockedUser.findFirst({
+    where: {
+      OR: [
+        { blockerId: session.user.id, blockedId: otherUserId },
+        { blockerId: otherUserId, blockedId: session.user.id }
+      ]
+    }
+  });
+
+  if (block) {
+    throw new Error('Não é possível enviar mensagens para este usuário');
   }
 
   const message = await prisma.message.create({
@@ -340,6 +373,7 @@ export async function findRandomUser(): Promise<{
   // - Está na lista de online (validada no servidor)
   // - Não tem conversa COM mensagens com o usuário atual
   // - Não é um favorito do usuário atual
+  // - Não está bloqueado (em nenhuma direção)
   const randomUserResult = await prisma.$queryRaw<{ id: string }[]>`
     SELECT u.id
     FROM "user" u
@@ -360,6 +394,11 @@ export async function findRandomUser(): Promise<{
             (c2."user1Id" = ${currentUserId} AND c2."user2Id" = u.id)
             OR (c2."user1Id" = u.id AND c2."user2Id" = ${currentUserId})
           )
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM "blocked_user" bu
+        WHERE (bu."blockerId" = ${currentUserId} AND bu."blockedId" = u.id)
+           OR (bu."blockerId" = u.id AND bu."blockedId" = ${currentUserId})
       )
     ORDER BY RANDOM()
     LIMIT 1

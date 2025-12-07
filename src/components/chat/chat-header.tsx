@@ -5,6 +5,7 @@ import { ArrowLeft, MoreVertical } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { FavoriteButton } from './favorite-button';
+import { BlockButton } from './block-button';
 
 interface ChatHeaderProps {
   conversation: {
@@ -15,6 +16,7 @@ interface ChatHeaderProps {
     lastSeenAt: Date | null;
   };
   isDesktop: boolean;
+  onBlockChange?: (isBlocked: boolean) => void;
   className?: string;
 }
 
@@ -30,6 +32,7 @@ function getInitials(name: string) {
 export function ChatHeader({
   conversation,
   isDesktop,
+  onBlockChange,
   className
 }: ChatHeaderProps) {
   return (
@@ -86,13 +89,11 @@ export function ChatHeader({
 
       <div className='flex items-center gap-1'>
         <FavoriteButton conversationId={conversation.id} />
-        <Button
-          variant='ghost'
-          size='icon'
-          className='text-muted-foreground h-10 w-10 rounded-full'
-        >
-          <MoreVertical className='h-5 w-5' />
-        </Button>
+        <BlockButton
+          otherUserId={conversation.otherUserId}
+          userName={conversation.name}
+          onBlockChange={onBlockChange}
+        />
       </div>
     </header>
   );

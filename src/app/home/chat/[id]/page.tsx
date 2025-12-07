@@ -34,6 +34,7 @@ interface Conversation {
   image: string | null;
   lastSeenAt: Date | null;
   otherUserId: string;
+  isBlocked?: boolean;
 }
 
 export default function ChatPage() {
@@ -233,7 +234,13 @@ export default function ChatPage() {
     >
       <NoiseBackground />
       <GridBackground opacity={0.3} />
-      <ChatHeader conversation={conversation} isDesktop={isDesktop} />
+      <ChatHeader
+        conversation={conversation}
+        isDesktop={isDesktop}
+        onBlockChange={(isBlocked) =>
+          setConversation((prev) => (prev ? { ...prev, isBlocked } : prev))
+        }
+      />
 
       <MessageList
         messages={allMessages}
@@ -250,6 +257,8 @@ export default function ChatPage() {
         onTyping={sendTypingEvent}
         onStopTyping={stopTyping}
         sending={sending}
+        disabled={conversation.isBlocked}
+        disabledMessage='Usuário bloqueado'
       />
     </div>
   );

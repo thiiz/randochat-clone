@@ -11,6 +11,8 @@ interface ChatInputProps {
   onTyping: () => void;
   onStopTyping: () => void;
   sending: boolean;
+  disabled?: boolean;
+  disabledMessage?: string;
   className?: string;
 }
 
@@ -21,6 +23,8 @@ export function ChatInput({
   onTyping,
   onStopTyping,
   sending,
+  disabled,
+  disabledMessage,
   className
 }: ChatInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -90,22 +94,24 @@ export function ChatInput({
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           onBlur={onStopTyping}
-          placeholder='Mensagem...'
+          placeholder={
+            disabled && disabledMessage ? disabledMessage : 'Mensagem...'
+          }
           className='scrollbar-hide max-h-[200px] min-h-[44px] w-full resize-none border-0 bg-transparent px-4 py-3 shadow-none focus-visible:ring-0'
           rows={1}
-          disabled={sending}
+          disabled={sending || disabled}
         />
 
         <Button
           size='icon'
           className={cn(
             'h-11 w-11 shrink-0 rounded-full shadow-sm transition-all duration-200',
-            value.trim()
+            value.trim() && !disabled
               ? 'bg-primary text-primary-foreground hover:bg-primary/90'
               : 'bg-muted text-muted-foreground hover:bg-muted/80'
           )}
           onClick={onSend}
-          disabled={sending || !value.trim()}
+          disabled={sending || !value.trim() || disabled}
         >
           <Send className={cn('h-5 w-5', value.trim() && 'ml-0.5')} />
         </Button>

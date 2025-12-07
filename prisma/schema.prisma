@@ -30,6 +30,10 @@ model User {
   sentMessages          Message[]
   favoriteConversations FavoriteConversation[]
 
+  // Block relations
+  blockedUsers   BlockedUser[] @relation("BlockedByUser") // usuários que eu bloqueei
+  blockedByUsers BlockedUser[] @relation("BlockedUser")   // usuários que me bloquearam
+
   @@map("user")
 }
 
@@ -136,4 +140,17 @@ model RateLimit {
 
   @@unique([userId, action])
   @@map("rate_limit")
+}
+
+model BlockedUser {
+  id            String   @id @default(cuid())
+  blockerId     String   // quem bloqueou
+  blockedId     String   // quem foi bloqueado
+  createdAt     DateTime @default(now())
+
+  blocker User @relation("BlockedByUser", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("BlockedUser", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@map("blocked_user")
 }
