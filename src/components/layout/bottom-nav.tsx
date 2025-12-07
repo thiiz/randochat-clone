@@ -10,14 +10,14 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect, useCallback } from 'react';
 import { cn } from '@/lib/utils';
-import { usePresence } from '@/contexts/presence-context';
+
 import { findRandomUser } from '@/lib/chat-actions';
 import { toast } from 'sonner';
 
 export function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { getOnlineUserIds } = usePresence();
+
   const [isSearching, setIsSearching] = useState(false);
   const [cooldown, setCooldown] = useState(0);
 
@@ -43,9 +43,7 @@ export function BottomNav() {
 
     setIsSearching(true);
     try {
-      // Obtém IDs de usuários online da presença em tempo real
-      const onlineUserIds = getOnlineUserIds();
-      const result = await findRandomUser(onlineUserIds);
+      const result = await findRandomUser();
 
       if (result.success && result.conversationId) {
         router.push(`/home/chat/${result.conversationId}`);
@@ -60,7 +58,7 @@ export function BottomNav() {
     } finally {
       setIsSearching(false);
     }
-  }, [isSearching, cooldown, router, getOnlineUserIds]);
+  }, [isSearching, cooldown, router]);
 
   const isDisabled = isSearching || cooldown > 0;
 
