@@ -172,6 +172,7 @@ export async function getConversationMessages(conversationId: string): Promise<{
     lastSeenAt: Date | null;
     otherUserId: string;
     isBlocked: boolean;
+    blockedBy?: string | null;
   };
   messages: Array<{
     id: string;
@@ -220,8 +221,7 @@ export async function getConversationMessages(conversationId: string): Promise<{
       ? conversation.user2
       : conversation.user1;
 
-  // Verifica se há bloqueio entre os usuários
-  const block = await prisma.blockedUser.findFirst({
+  const blocks = await prisma.blockedUser.findMany({
     where: {
       OR: [
         { blockerId: session.user.id, blockedId: otherUser.id },
@@ -230,7 +230,11 @@ export async function getConversationMessages(conversationId: string): Promise<{
     }
   });
 
-  const isBlocked = !!block;
+  const myBlock = blocks.find((b) => b.blockerId === session.user.id);
+  const theirBlock = blocks.find((b) => b.blockerId === otherUser.id);
+
+  const isBlocked = blocks.length > 0;
+  const blockedBy = myBlock ? session.user.id : theirBlock?.blockerId;
 
   return {
     conversation: {
@@ -240,7 +244,8 @@ export async function getConversationMessages(conversationId: string): Promise<{
       image: otherUser.image,
       lastSeenAt: otherUser.lastSeenAt,
       otherUserId: otherUser.id,
-      isBlocked
+      isBlocked,
+      blockedBy
     },
     messages: conversation.messages.map(
       (msg: (typeof conversation.messages)[number]) => {

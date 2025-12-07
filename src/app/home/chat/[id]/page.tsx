@@ -35,6 +35,7 @@ interface Conversation {
   lastSeenAt: Date | null;
   otherUserId: string;
   isBlocked?: boolean;
+  blockedBy?: string | null;
 }
 
 export default function ChatPage() {
@@ -82,7 +83,8 @@ export default function ChatPage() {
 
   const { isOtherTyping, sendTypingEvent, stopTyping } = useTypingIndicator({
     conversationId,
-    currentUserId: session?.user?.id || ''
+    currentUserId: session?.user?.id || '',
+    isBlocked: conversation?.isBlocked
   });
 
   useEffect(() => {
@@ -238,7 +240,15 @@ export default function ChatPage() {
         conversation={conversation}
         isDesktop={isDesktop}
         onBlockChange={(isBlocked) =>
-          setConversation((prev) => (prev ? { ...prev, isBlocked } : prev))
+          setConversation((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  isBlocked,
+                  blockedBy: isBlocked ? session?.user?.id : null
+                }
+              : prev
+          )
         }
       />
 
@@ -258,7 +268,11 @@ export default function ChatPage() {
         onStopTyping={stopTyping}
         sending={sending}
         disabled={conversation.isBlocked}
-        disabledMessage='Usuário bloqueado'
+        disabledMessage={
+          conversation.blockedBy === session?.user?.id
+            ? 'Você bloqueou este usuário'
+            : 'Você foi bloqueado por este usuário'
+        }
       />
     </div>
   );

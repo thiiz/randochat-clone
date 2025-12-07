@@ -7,6 +7,7 @@ import type { RealtimeChannel } from '@supabase/supabase-js';
 interface UseTypingIndicatorProps {
   conversationId: string;
   currentUserId: string;
+  isBlocked?: boolean;
 }
 
 interface TypingPayload {
@@ -19,7 +20,8 @@ const DEBOUNCE_DELAY = 300; // Delay entre eventos de typing
 
 export function useTypingIndicator({
   conversationId,
-  currentUserId
+  currentUserId,
+  isBlocked = false
 }: UseTypingIndicatorProps) {
   const [isOtherTyping, setIsOtherTyping] = useState(false);
   const channelRef = useRef<RealtimeChannel | null>(null);
@@ -28,7 +30,7 @@ export function useTypingIndicator({
   const lastSentRef = useRef<number>(0);
 
   useEffect(() => {
-    if (!conversationId || !currentUserId) return;
+    if (!conversationId || !currentUserId || isBlocked) return;
 
     const channelName = `typing:${conversationId}`;
     const channel = supabase.channel(channelName);
@@ -64,12 +66,13 @@ export function useTypingIndicator({
       }
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
       }
     };
-  }, [conversationId, currentUserId]);
+  }, [conversationId, currentUserId, isBlocked]);
 
   const sendTypingEvent = useCallback(() => {
-    if (!channelRef.current || !currentUserId) return;
+    if (!channelRef.current || !currentUserId || isBlocked) return;
 
     const now = Date.now();
 
