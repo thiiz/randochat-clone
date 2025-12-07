@@ -107,7 +107,7 @@ export async function getBlockedUsers(): Promise<
     orderBy: { createdAt: 'desc' }
   });
 
-  return blockedUsers.map((b) => ({
+  return blockedUsers.map((b: (typeof blockedUsers)[number]) => ({
     id: b.blocked.id,
     name: b.blocked.name,
     image: b.blocked.image,
