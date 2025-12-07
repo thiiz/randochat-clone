@@ -1,6 +1,7 @@
 import { getConversations, getFavoriteConversations } from '@/lib/chat-actions';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { HomeLayoutClient } from './home-layout-client';
 
 export default async function HomeLayout({
@@ -13,7 +14,7 @@ export default async function HomeLayout({
   });
 
   if (!session?.user) {
-    return null;
+    redirect('/sign-in');
   }
 
   const [conversations, favorites] = await Promise.all([

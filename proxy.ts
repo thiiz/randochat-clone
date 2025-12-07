@@ -7,7 +7,7 @@ const publicRoutes = ['/sign-in', '/sign-up'];
 // Routes that authenticated users should not access
 const authRoutes = ['/sign-in', '/sign-up'];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Allow static files and images
