@@ -110,7 +110,15 @@ export async function getConversations() {
   });
 }
 
-export async function getFavoriteConversations() {
+export async function getFavoriteConversations(): Promise<
+  Array<{
+    id: string;
+    name: string;
+    image: string | null;
+    lastSeenAt: Date | null;
+    otherUserId: string;
+  }>
+> {
   const session = await auth.api.getSession({
     headers: {
       cookie: await getSessionCookie()
