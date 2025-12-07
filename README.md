@@ -8,7 +8,7 @@ A starter template for building Next.js applications with Shadcn/ui. This projec
 
 This starter template includes:
 
-- **Next.js 15**: The latest version of the popular React framework.
+- **Next.js 16**: The latest version of the popular React framework.
 - **Shadcn/ui**: A collection of beautifully designed, accessible, and customizable UI components.
 - **Tailwind CSS**: A utility-first CSS framework for rapid UI development.
 - **ESLint and Prettier**: For code linting and formatting, to ensure code quality and consistency.
