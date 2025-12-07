@@ -77,10 +77,13 @@ export async function getConversations() {
   });
 
   // Conta mensagens não lidas por conversa (apenas mensagens do outro usuário)
+  const conversationIds = conversations.map(
+    (c: (typeof conversations)[number]) => c.id
+  );
   const unreadCounts = await prisma.message.groupBy({
     by: ['conversationId'],
     where: {
-      conversationId: { in: conversations.map((c) => c.id) },
+      conversationId: { in: conversationIds },
       senderId: { not: session.user.id },
       isRead: false
     },
@@ -88,10 +91,13 @@ export async function getConversations() {
   });
 
   const unreadCountMap = new Map(
-    unreadCounts.map((uc) => [uc.conversationId, uc._count.id])
+    unreadCounts.map((uc: (typeof unreadCounts)[number]) => [
+      uc.conversationId,
+      uc._count.id
+    ])
   );
 
-  return conversations.map((conv) => {
+  return conversations.map((conv: (typeof conversations)[number]) => {
     const otherUser =
       conv.user1Id === session.user.id ? conv.user2 : conv.user1;
     const lastMessage = conv.messages[0];
@@ -141,7 +147,7 @@ export async function getFavoriteConversations(): Promise<
     }
   });
 
-  return favorites.map((fav) => {
+  return favorites.map((fav: (typeof favorites)[number]) => {
     const otherUser =
       fav.conversation.user1Id === session.user.id
         ? fav.conversation.user2
@@ -236,18 +242,20 @@ export async function getConversationMessages(conversationId: string): Promise<{
       otherUserId: otherUser.id,
       isBlocked
     },
-    messages: conversation.messages.map((msg) => {
-      const senderId: 'me' | 'other' =
-        msg.senderId === session.user.id ? 'me' : 'other';
-      return {
-        id: msg.id,
-        content: msg.content,
-        imageUrl: msg.imageUrl,
-        senderId,
-        createdAt: msg.createdAt,
-        isRead: msg.isRead
-      };
-    })
+    messages: conversation.messages.map(
+      (msg: (typeof conversation.messages)[number]) => {
+        const senderId: 'me' | 'other' =
+          msg.senderId === session.user.id ? 'me' : 'other';
+        return {
+          id: msg.id,
+          content: msg.content,
+          imageUrl: msg.imageUrl,
+          senderId,
+          createdAt: msg.createdAt,
+          isRead: msg.isRead
+        };
+      }
+    )
   };
 }
 
